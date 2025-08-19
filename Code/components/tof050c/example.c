@@ -1,6 +1,8 @@
 #include "I2CHandler.h"
 #include "TOF050C.h"
 
+#define TOF050C_ADDR_7BIT 0x29
+
 void app_main(void)
 {
     i2c_master_bus_handle_t bus;

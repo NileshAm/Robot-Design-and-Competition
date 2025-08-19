@@ -1,6 +1,8 @@
 #include "I2CHandler.h"
 #include "MPU6050.h"
 
+#define MPU6050_ADDR_7BIT 0x68
+
 void app_main(void)
 {
     i2c_master_bus_handle_t bus;
