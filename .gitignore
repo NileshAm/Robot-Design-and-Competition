@@ -4,3 +4,4 @@ sdkconfig.old
 
 .vscode
 .devcontainer
+*.code-workspace
