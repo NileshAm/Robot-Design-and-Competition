@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include <Adafruit_VL6180X.h>
 
 class Tof
 {

@@ -1,6 +1,4 @@
 #include "Tof.h"
-#include <Arduino.h>
-#include <Adafruit_VL6180X.h>
 
 Tof::Tof(uint8_t xshut, int address, uint8_t sda, uint8_t scl)
 {
@@ -28,6 +26,8 @@ void Tof::enable()
 void Tof::init(int offset)
 {
     digitalWrite(_xshut, HIGH);
+    delay(10);
+    _sensor.begin();
     _sensor.setAddress(_address);
     delay(10);
     _sensor.setOffset(offset);
