@@ -9,7 +9,8 @@ class Robot {
     public:
         Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& Tof);
 
-        Motor& MotorR, MotorL;        // dir1, dir2, pwm, encA, encB, ticks/rev
+        Motor& MotorR;        // dir1, dir2, pwm, encA, encB, ticks/rev
+        Motor& MotorL;        // dir1, dir2, pwm, encA, encB, ticks/rev
         IRArray& ir;    // number of sensors, pins array
         Tof& tof1;      // xshut, address, sda, scl
 
@@ -33,13 +34,15 @@ class Robot {
          *       or implementation. Exact rotation angle, timing, and behavior under
          *       load or obstruction are implementation-dependent.
          */
-        void turn90Clockwise(int speed); // speed -100 to 100
+        void turn90(); // speed -100 to 100
 
-        void turn(int angle, int speed);
+        void turn(int angle);
 
     private:
-        float _speed = 50;
+        float _speed = 40;
         PID _straightLinePID;
         PID _lineFollowerPID;
         PID _wallFollowerPID;
+        uint16_t _ticksPer360 = 1150;
+        double _ticksPerDegree;
 };
