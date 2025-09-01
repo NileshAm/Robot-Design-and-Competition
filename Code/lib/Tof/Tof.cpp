@@ -27,7 +27,10 @@ void Tof::init(int offset)
 {
     digitalWrite(_xshut, HIGH);
     delay(10);
-    _sensor.begin();
+    if(!_sensor.begin()){
+        Serial.println("Tof failed to initialize");
+        while (1);
+    }
     _sensor.setAddress(_address);
     delay(10);
     _sensor.setOffset(offset);
@@ -36,4 +39,8 @@ void Tof::init(int offset)
 int Tof::readRange()
 {
     return _sensor.readRange();
+}
+
+int Tof::readState(){
+    return _sensor.readRangeStatus();
 }

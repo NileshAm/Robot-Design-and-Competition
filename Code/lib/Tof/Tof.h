@@ -17,5 +17,6 @@ public:
     void enable();
     void init(int offset=0);
     int readRange();
+    int readState();
 };
 
