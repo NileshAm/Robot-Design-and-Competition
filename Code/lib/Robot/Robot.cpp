@@ -7,7 +7,7 @@ Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& Tof):
     tof1(Tof),
 
     _straightLinePID(0.1,0.2,0,0),
-    _lineFollowerPID(0,0,0,3500),
+    _lineFollowerPID(0.25,0.00,0,70),
     _wallFollowerPID(0,0,0,15)
 
 {
@@ -73,9 +73,11 @@ void Robot::moveStraight() {
 
 void Robot::followLine(){
     int error = ir.weightedSum();
-    int correction = (int)_straightLinePID.compute((float)error);
-    MotorR.setSpeed(_speed + correction);
-    MotorL.setSpeed(_speed - correction);
+    error = constrain(error, 0, 130);
+    int correction = (int)_lineFollowerPID.compute((float)error);
+
+    MotorR.setSpeed(_speed - correction);
+    MotorL.setSpeed(_speed + correction);
 }
 
 void Robot::followWall(){
