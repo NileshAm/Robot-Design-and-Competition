@@ -15,3 +15,4 @@ inline void printArray(const T* a, size_t n, const char* sep = ", ") {
 
 // Declare the float-specific helper here (with defaults, if you want).
 void printArrayF(const float* a, size_t n, const char* sep = ", ", uint8_t digits = 2);
+void printArrayD(const double* a, size_t n, const char* sep = ", ", uint8_t digits = 6);
