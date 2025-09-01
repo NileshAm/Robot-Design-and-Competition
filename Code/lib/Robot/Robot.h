@@ -7,6 +7,8 @@
 
 class Robot {
     public:
+        using TurnCallback = void (*)(Robot*);   // non-capturing lambda or plain function
+
         Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& Tof);
 
         Motor& MotorR;        // dir1, dir2, pwm, encA, encB, ticks/rev
@@ -36,7 +38,10 @@ class Robot {
          */
         void turn90(); // speed -100 to 100
 
-        void turn(int angle);
+        void turn(int angle);                                              // normal
+        void turn(int angle, uint16_t cbEveryMs, TurnCallback cb);         // with callback
+
+        void calibrateIR();
 
     private:
         float _speed = 40;
@@ -45,4 +50,6 @@ class Robot {
         PID _wallFollowerPID;
         uint16_t _ticksPer360 = 1150;
         double _ticksPerDegree;
+
+        void _turnCore(int angle, bool useCb, uint16_t cbEveryMs, TurnCallback cb);
 };

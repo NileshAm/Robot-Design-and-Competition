@@ -20,40 +20,49 @@ void Robot::turn90() {
 }
 
 void Robot::turn(int angle) {
-  // reset encoders
+  _turnCore(angle, /*useCb=*/false, 0, nullptr);
+}
+
+void Robot::turn(int angle, uint16_t cbEveryMs, TurnCallback cb) {
+  _turnCore(angle, /*useCb=*/true, cbEveryMs ? cbEveryMs : 1, cb);
+}
+
+void Robot::_turnCore(int angle, bool useCb, uint16_t cbEveryMs, TurnCallback cb) {
+  if (angle == 0) return;
+
   MotorL.resetTicks();
   MotorR.resetTicks();
 
-  // target ticks (always positive)
-  long target = lround(fabsf(_ticksPerDegree * (float)angle));
-
-  // direction: +angle => L forward, R backward (swap if your robot turns opposite)
-  int dir = (angle >= 0) ? 1 : -1;
+  const long target = lround(fabsf(_ticksPerDegree * (float)angle));
+  const int dir = (angle >= 0) ? 1 : -1;
 
   MotorL.setSpeed(_speed * dir);
   MotorR.setSpeed(-_speed * dir);
 
-  // safety timeout (optional)
-  const unsigned long TIMEOUT_MS = 5000;
-  unsigned long t0 = millis();
+  unsigned long nextCb = millis() + cbEveryMs;
+  const unsigned long TIMEOUT_MS = 8000;
+  const unsigned long t0 = millis();
 
   while (true) {
-    long L = labs(MotorL.getTicks());  // absolute progress
+    const unsigned long now = millis();
+
+    if (useCb && (long)(now - nextCb) >= 0) {
+      if (cb) cb(this);                 // e.g., [](Robot* r){ r->ir.updateSensors(); }
+      nextCb += cbEveryMs;
+    }
+
+    long L = labs(MotorL.getTicks());
     long R = labs(MotorR.getTicks());
 
     if (L >= target) MotorL.setSpeed(0);
     if (R >= target) MotorR.setSpeed(0);
 
-    if (L >= target && R >= target) break;
-    if (millis() - t0 > TIMEOUT_MS)   break;  // safety exit
-    // (optional) small pause to ease serial spam
-    // delay(1);
+    if ((L >= target && R >= target) || (now - t0 > TIMEOUT_MS)) break;
   }
 
   MotorL.setSpeed(0);
   MotorR.setSpeed(0);
 }
-
 
 void Robot::moveStraight() {
     int error = MotorR.getTicks() - MotorL.getTicks();
@@ -74,4 +83,14 @@ void Robot::followWall(){
     int correction = (int)_straightLinePID.compute((float)error);
     MotorR.setSpeed(_speed + correction);
     MotorL.setSpeed(_speed - correction);
+}
+
+void Robot::calibrateIR(){
+    int angles[5] = {45, -90, 90, -90, 45};
+    for (int i = 0; i < 5; i++)
+    {
+        Robot::turn(angles[i], 10, [](Robot *r)
+                    { r->ir.updateSensors(); });
+    }
+    ir.calibrate();
 }
