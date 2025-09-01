@@ -16,6 +16,13 @@ public:
   void readNormalized(float* out);      // uses readRaw()
   void digitalRead(bool* out);          // uses readNormalized()
 
+  
+  void setScalingFactor(const float* in);
+  void setOffset(const float* in);
+  float* getScalingFactor();
+  float* getOffset();
+
+
   // ---- calibration flow ----
   // Call repeatedly while moving sensors over line/background:
   void updateSensors();                 // calls readRaw() and updates min/max
@@ -24,6 +31,7 @@ public:
 
   // ---- simple aggregate ----
   float weightedSum();                  // thresholds + weights → 0..1
+
 
 private:
   uint8_t  _n;

@@ -89,3 +89,17 @@ float IRArray::weightedSum() {
     delete[] dig;
     return acc / _weightSum;
 }
+
+void IRArray::setScalingFactor(const float* in) {
+  for (uint8_t i = 0; i < _n; ++i) _scale[i] = in[i];
+}
+
+void IRArray::setOffset(const float* in) {
+  for (uint8_t i = 0; i < _n; ++i) _offset[i] = in[i];
+}
+float* IRArray::getScalingFactor(){
+    return _scale;
+}
+float* IRArray::getOffset(){
+    return _offset;
+}
