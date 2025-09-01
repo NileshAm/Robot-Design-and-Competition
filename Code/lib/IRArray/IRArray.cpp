@@ -1,4 +1,5 @@
 #include "IRArray.h"
+#include <Utils.h>
 
 IRArray::IRArray(uint8_t n, const uint8_t* pins,
                  const float* weights, float threshold)
@@ -8,10 +9,10 @@ IRArray::IRArray(uint8_t n, const uint8_t* pins,
 {
     _pins    = new uint8_t [_n];
     _weights = new float   [_n];
-    _minV    = new uint16_t[_n];
-    _maxV    = new uint16_t[_n];
-    _scale   = new float   [_n];
-    _offset  = new float   [_n];
+    _minV    = new int[_n];
+    _maxV    = new int[_n];
+    _scale   = new double   [_n];
+    _offset  = new double   [_n];
 
     for (uint8_t i=0;i<_n;++i){
         _pins[i] = pins[i];
@@ -37,14 +38,15 @@ void IRArray::init() {
     for (uint8_t i=0;i<_n;++i) pinMode(_pins[i], INPUT);
 }
 
-void IRArray::readRaw(uint16_t* out) {
+void IRArray::readRaw(int* out) {
     for (uint8_t i=0;i<_n;++i) out[i] = analogRead(_pins[i]);
 }
 
 void IRArray::updateSensors() {
     // read raw, then update min/max
-    uint16_t* raw = new uint16_t[_n];
+    int* raw = new int[_n];
     readRaw(raw);
+    printArray(raw, 8);
     for (uint8_t i=0;i<_n;++i){
         if (raw[i] > _maxV[i]) _maxV[i] = raw[i];
         if (raw[i] < _minV[i]) _minV[i] = raw[i];
@@ -61,9 +63,9 @@ void IRArray::calibrate() {
     }
 }
 
-void IRArray::readNormalized(float* out) {
+void IRArray::readNormalized(double* out) {
     // use readRaw()
-    uint16_t* raw = new uint16_t[_n];
+    int* raw = new int[_n];
     readRaw(raw);
     for (uint8_t i=0;i<_n;++i){
         float x = _scale[i] * (float)raw[i] - _offset[i]; // (raw-min)/(max-min)
@@ -75,7 +77,7 @@ void IRArray::readNormalized(float* out) {
 
 void IRArray::digitalRead(bool* out) {
     // use readNormalized()
-    float* norm = new float[_n];
+    double* norm = new double[_n];
     readNormalized(norm);
     for (uint8_t i=0;i<_n;++i) out[i] = (norm[i] >= _threshold);
     delete[] norm;
@@ -87,19 +89,19 @@ float IRArray::weightedSum() {
     float acc = 0.0f;
     for (uint8_t i=0;i<_n;++i) if (dig[i]) acc += _weights[i];
     delete[] dig;
-    return acc / _weightSum;
+    return acc;
 }
 
-void IRArray::setScalingFactor(const float* in) {
+void IRArray::setScalingFactor(const double* in) {
   for (uint8_t i = 0; i < _n; ++i) _scale[i] = in[i];
 }
 
-void IRArray::setOffset(const float* in) {
+void IRArray::setOffset(const double* in) {
   for (uint8_t i = 0; i < _n; ++i) _offset[i] = in[i];
 }
-float* IRArray::getScalingFactor(){
+double* IRArray::getScalingFactor(){
     return _scale;
 }
-float* IRArray::getOffset(){
+double* IRArray::getOffset(){
     return _offset;
 }

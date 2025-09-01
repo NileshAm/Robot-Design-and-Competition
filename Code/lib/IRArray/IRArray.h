@@ -12,15 +12,15 @@ public:
   void init();                          // pinMode(INPUT)
 
   // ---- reads (caller provides arrays of size _n) ----
-  void readRaw(uint16_t* out);
-  void readNormalized(float* out);      // uses readRaw()
+  void readRaw(int* out);
+  void readNormalized(double* out);      // uses readRaw()
   void digitalRead(bool* out);          // uses readNormalized()
 
   
-  void setScalingFactor(const float* in);
-  void setOffset(const float* in);
-  float* getScalingFactor();
-  float* getOffset();
+  void setScalingFactor(const double* in);
+  void setOffset(const double* in);
+  double* getScalingFactor();
+  double* getOffset();
 
 
   // ---- calibration flow ----
@@ -43,10 +43,10 @@ private:
   float*   _weights;
 
   // calibration state
-  uint16_t* _minV;   // start 1023
-  uint16_t* _maxV;   // start 0
-  float*    _scale;  // 1/(max-min) (guarded)
-  float*    _offset; // min/(max-min)
+  int* _minV;   // start 1023
+  int* _maxV;   // start 0
+  double*    _scale;  // 1/(max-min) (guarded)
+  double*    _offset; // min/(max-min)
 
   // non-copyable
   IRArray(const IRArray&) = delete;
