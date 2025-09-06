@@ -14,6 +14,10 @@ Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& Tof):
     _ticksPerDegree = (double)_ticksPer360 / 360;
 };
 
+void Robot::stop(){
+    MotorL.setSpeed(0);
+    MotorR.setSpeed(0);
+}
 
 void Robot::turn90() {
     Robot::turn(90);
@@ -64,11 +68,14 @@ void Robot::_turnCore(int angle, bool useCb, uint16_t cbEveryMs, TurnCallback cb
   MotorR.setSpeed(0);
 }
 
+void Robot::moveStraight(float speed) {
+  int error = MotorR.getTicks() - MotorL.getTicks();
+  int correction = (int)_straightLinePID.compute((float)error);
+  MotorR.setSpeed(speed + correction);
+  MotorL.setSpeed(speed - correction);
+}
 void Robot::moveStraight() {
-    int error = MotorR.getTicks() - MotorL.getTicks();
-    int correction = (int)_straightLinePID.compute((float)error);
-    MotorR.setSpeed(_speed + correction);
-    MotorL.setSpeed(_speed - correction);
+    moveStraight(_speed);
 }
 
 void Robot::followLine(){
