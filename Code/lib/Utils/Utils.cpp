@@ -19,7 +19,6 @@ void printArrayD(const double* a, size_t n, const char* sep, uint8_t digits) {
   Serial.println();
 }
 
-
 uint8_t pack8(const bool a[8]){
   uint8_t v = 0;
   for (uint8_t i = 0; i < 8; ++i) v |= (a[i] ? 1 : 0) << i;   // or << (7-i) if MSB-first index

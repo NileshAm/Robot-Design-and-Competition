@@ -16,4 +16,5 @@ public:
     bool isAllWhite();
     bool isAllBlack();
     bool isLine();
+
 };

@@ -12,21 +12,18 @@ bool Junction::isTurn(){
 bool Junction::isRightTurn(){
     bool out[8];
     _ir.digitalRead(out);
-
     return pack8(out) == 0b00011111;
 }
 
 bool Junction::isLeftTurn(){
     bool out[8];
     _ir.digitalRead(out);
-
     return pack8(out) == 0b11111000;
 }
 
 bool Junction::isTJunction(){
     bool out[8];
-    _ir.digitalRead(out);
-    
+    _ir.digitalRead(out);    
     return pack8(out) == 0b11111111;
 }
 
