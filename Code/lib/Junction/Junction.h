@@ -13,5 +13,7 @@ public:
     bool isLeftTurn();
     bool isTurn();
     bool isTJunction();
-
+    bool isAllWhite();
+    bool isAllBlack();
+    bool isLine();
 };
