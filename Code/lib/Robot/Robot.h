@@ -17,6 +17,7 @@ class Robot {
         Tof& tof1;      // xshut, address, sda, scl
 
         void moveStraight();
+        void moveStraight(float speed);
         void followLine();
         void followWall();
 
@@ -40,6 +41,7 @@ class Robot {
 
         void turn(int angle);                                              // normal
         void turn(int angle, uint16_t cbEveryMs, TurnCallback cb);         // with callback
+        void stop();
 
         void goTillTicks(long targetTicks);
         void goTillCM(float cm);
