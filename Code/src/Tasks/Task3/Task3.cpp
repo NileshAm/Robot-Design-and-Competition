@@ -2,31 +2,31 @@
 #include <Utils.h>
 
 namespace Task3 {
-    void run(Robot& robot , Junction& junction) {
+    void run(Robot& robot) {
         int acc = 0;
-        while (!junction.isLine()){
+        while (!robot.junction.isLine()){
             robot.moveStraight();
         }
         
-        while (junction.isTurn())
+        while (robot.junction.isTurn())
         {
             robot.followLine();
         }
         robot.turn90();
-        while (junction.isAllWhite())
+        while (robot.junction.isAllWhite())
         {
             robot.followLine();
         }
         
 
         long ticksPer0 = 200; // TODO: tune this value
-        while (!junction.isLine())
+        while (!robot.junction.isLine())
         {
             robot.MotorL.resetTicks();
             robot.MotorR.resetTicks();
-            while (junction.isAllWhite())
+            while (robot.junction.isAllWhite())
             {
-                robot.moveStraight(); // TODO: make able to set speed
+                robot.moveStraight(30);
             }
             long ticks = (robot.MotorL.getTicks() + robot.MotorR.getTicks()) / 2;
             if (ticks < ticksPer0)
@@ -38,7 +38,7 @@ namespace Task3 {
                 acc = pushBitMSB(acc, 1);
             }
             
-            while (junction.isAllBlack())
+            while (robot.junction.isAllBlack())
             {
                 robot.moveStraight();
             }

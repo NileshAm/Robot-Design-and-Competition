@@ -5,5 +5,5 @@
 #include <Junction.h>
 
 namespace Task3 {
-    void run(Robot& robot, Junction& junction);
+    void run(Robot& robot);
 }
