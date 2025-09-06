@@ -7,13 +7,18 @@ public:
   // encA/encB = quadrature encoder pins (encA must be interrupt-capable)
   // ticksPerRev = encoder ticks per full shaft revolution
   Motor(uint8_t dir1, uint8_t dir2, uint8_t pwm,
-        uint8_t encA, uint8_t encB, uint16_t ticksPerRev = 600);
+        uint8_t encA, uint8_t encB, uint16_t ticksPerRev = 600, float wheelDiameter = 6.3);
 
   void init();                 // sets pinModes, checks/attaches interrupt
   void setSpeed(float pct);   // -100..100 (negative = reverse)
   long getTicks();             // thread-safe read
+  float getWheelDiameter();
+  float getTicksPerRev();
   void resetTicks();
   float getRPM();              // simple delta-based RPM
+
+  void goTillTicks(long targetTicks, float speed);
+  void goTillCM(float cm, float speed);
 
   void setTicksPerRev(uint16_t tpr) { _ticksPerRev = tpr; }
 
@@ -31,6 +36,9 @@ private:
 
   // which external interrupt number this instance uses (0..5 on Mega)
   int8_t _intNum = -1;
+  
+  // wheel diameter of the wheel attached to this motor (for distance calculations)
+  float _wheelDiameter = 0; // in cm
 
   // called from ISR to update ticks
   inline void handleEncoder();

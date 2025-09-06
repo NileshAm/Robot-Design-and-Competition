@@ -5,9 +5,9 @@
 Motor *Motor::_reg[Motor::kMaxInts] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
 
 Motor::Motor(uint8_t dir1, uint8_t dir2, uint8_t pwm,
-             uint8_t encA, uint8_t encB, uint16_t tpr)
+             uint8_t encA, uint8_t encB, uint16_t tpr, float wheelDiameter)
     : _dir1(dir1), _dir2(dir2), _pwm(pwm), _encA(encA), _encB(encB),
-      _ticks(0), _ticksPerRev(tpr), _lastMs(0), _lastTicks(0), _intNum(-1) {}
+      _ticks(0), _ticksPerRev(tpr), _lastMs(0), _lastTicks(0), _intNum(-1), _wheelDiameter(wheelDiameter){}
 
 void Motor::init()
 {
@@ -125,6 +125,50 @@ float Motor::getRPM()
     _lastMs = now;
     _lastTicks = tNow;
     return rpm;
+}
+
+float Motor::getWheelDiameter()
+{
+    return _wheelDiameter;
+}
+float Motor::getTicksPerRev()
+{
+    return _ticksPerRev;
+}
+
+void Motor::goTillTicks(long targetTicks, float speed)
+{
+    long startTicks = getTicks();
+    long endTicks = startTicks + targetTicks;
+    if (targetTicks > 0)
+    {
+        setSpeed(abs(speed));
+        while (getTicks() < endTicks)
+        {
+            // wait
+            delay(1);
+        }
+    }
+    else if (targetTicks < 0)
+    {
+        setSpeed(-abs(speed));
+        while (getTicks() > endTicks)
+        {
+            // wait
+            delay(1);
+        }
+    }
+    setSpeed(0);
+}
+
+void Motor::goTillCM(float cm, float speed)
+{
+    if (_ticksPerRev == 0 || _wheelDiameter <= 0.0f)
+        return;
+
+    float revs = cm / (3.14159f * _wheelDiameter);
+    long targetTicks = (long)(revs * (float)_ticksPerRev);
+    goTillTicks(targetTicks, speed);
 }
 
 inline void Motor::handleEncoder()

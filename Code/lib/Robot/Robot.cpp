@@ -87,6 +87,25 @@ void Robot::followWall(){
     MotorL.setSpeed(_speed + correction);
 }
 
+void Robot::goTillTicks(long targetTicks){
+    MotorL.resetTicks();
+    MotorR.resetTicks();
+
+    while ((MotorL.getTicks() + MotorR.getTicks())/2 < targetTicks)
+    {
+        Robot::moveStraight();
+        delay(1);
+    }
+    MotorL.setSpeed(0);
+    MotorR.setSpeed(0);
+    
+}
+
+void Robot::goTillCM(float cm){
+    long targetTicks = lround((cm / (3.14159 * MotorL.getWheelDiameter())) * MotorL.getTicksPerRev());
+    Robot::goTillTicks(targetTicks);
+}
+
 void Robot::calibrateIR(){
     int angles[5] = {45, -90, 90, -90, 45};
     for (int i = 0; i < 5; i++)

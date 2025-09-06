@@ -41,6 +41,9 @@ class Robot {
         void turn(int angle);                                              // normal
         void turn(int angle, uint16_t cbEveryMs, TurnCallback cb);         // with callback
 
+        void goTillTicks(long targetTicks);
+        void goTillCM(float cm);
+
         void calibrateIR();
 
     private:
