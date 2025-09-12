@@ -11,19 +11,10 @@ This repository contains all the design files and firmware for for the robot we 
   - [Manufacturing](/Design/Manufacturing/) : Contains all the files required to manufacture the robot.
 
 - [Code](/Code/) : Contains all the firmware for the robot.
-  - [main](Code/main/) : Contains the main file that runs the code.
-  - [components](Code/components/) : Contains all the components to run the main file.
-  <br/> *Individual folders must be made for individual components and file structure must be as follows.*
-    - componentName : name of the components
-      - include
-        - componentName.h : Code to Declare the component.
-      - CMakeLists.txt <br>
-      templete:
-      ``` 
-      idf_component_register(SRCS "componentName.c"
-                             INCLUDE_DIRS "include") 
-      ```
-      - componentName.c : Code which implement the component
+  - [include](/Code/include/) : Project headers for files. ([/include/README.md](/Code/include/README.md))
+  - [lib](/Code/lib/) : Project specific component files. ([/lib/README.md](/Code/lib/README.md))
+  - [src](/Code/src/) : Main file of the project.
+  - [test](/Code/test/) : Test files of the project. ([/test/README.md](/Code/test/README.md))
 
 ## Branching Structure
 
