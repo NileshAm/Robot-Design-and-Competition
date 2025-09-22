@@ -1,15 +1,23 @@
 #include <Arduino.h>
 #include "ColorSensor.h"
 
-// Wiring: TCS3200/TCS230 example
-// S0 -> 4, S1 -> 5, S2 -> 6, S3 -> 7, OUT -> 8
+// Pins: S0, S1, S2, S3, OUT
 ColorSensor sensor(4, 5, 6, 7, 8);
 
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(115200);
     sensor.begin();
-    sensor.calibrate();
-    Serial.println("Calibration done!");
+
+    // --- Calibration ---
+    Serial.println("Place sensor on WHITE surface...");
+    delay(3000); 
+    sensor.calibrate(150, true); 
+
+    Serial.println("Place sensor on BLACK surface...");
+    delay(3000);
+    sensor.calibrate(150, false);
+
+    Serial.println("Calibration complete!");
 }
 
 void loop() {
@@ -24,5 +32,5 @@ void loop() {
         default:          Serial.println("UNKNOWN"); break;
     }
 
-    delay(500);
+    delay(200);
 }
