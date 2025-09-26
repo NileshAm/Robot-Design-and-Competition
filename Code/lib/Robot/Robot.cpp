@@ -5,6 +5,7 @@ Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& Tof):
     MotorL(Motor_L),
     ir(IR_Arr),
     tof1(Tof),
+    junction(IR_Arr),
 
     _straightLinePID(0.1,0.2,0,0),
     _lineFollowerPID(0.25,0.00,0,70),
@@ -73,9 +74,11 @@ void Robot::moveStraight(float speed) {
   int correction = (int)_straightLinePID.compute((float)error);
   MotorR.setSpeed(speed + correction);
   MotorL.setSpeed(speed - correction);
+
 }
 void Robot::moveStraight() {
     moveStraight(_speed);
+}
 
 void Robot::followLine(){
     int error = ir.weightedSum();
