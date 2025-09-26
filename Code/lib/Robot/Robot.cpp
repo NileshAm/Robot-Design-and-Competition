@@ -74,10 +74,12 @@ void Robot::moveStraight(float speed) {
   int correction = (int)_straightLinePID.compute((float)error);
   MotorR.setSpeed(speed + correction);
   MotorL.setSpeed(speed - correction);
+
 }
 void Robot::moveStraight() {
     moveStraight(_speed);
 }
+
 void Robot::followLine(){
     int error = ir.weightedSum();
     error = constrain(error, 0, 130);
