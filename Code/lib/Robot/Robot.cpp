@@ -85,7 +85,6 @@ void Robot::moveStraight(float speed) {
 void Robot::moveStraight() {
     moveStraight(_speed);
 }
-
 void Robot::followLine(){
     int error = ir.weightedSum();
     error = constrain(error, 0, 130);
