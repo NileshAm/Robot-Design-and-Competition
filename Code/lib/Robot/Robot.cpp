@@ -96,7 +96,7 @@ void Robot::followLine(){
 }
 
 void Robot::followWall(){
-    int error = tof1.readRange();
+    int error = leftTof.readRange();
     int correction = (int)_wallFollowerPID.compute((float)error);
     MotorR.setSpeed(_speed - correction);
     MotorL.setSpeed(_speed + correction);
