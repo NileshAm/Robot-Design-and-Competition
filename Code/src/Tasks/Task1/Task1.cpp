@@ -144,7 +144,8 @@ namespace Task1
                 tempX = x + xDir;
                 tempY = y;
             }
-            switch (robot.boxColorSensor.getColor())
+            ColorName color = robot.boxColorSensor.getColor();
+            switch (color)
             {
             case COLOR_RED:
                 redBox.x = tempX;
@@ -162,7 +163,94 @@ namespace Task1
             default:
                 break;
             }
-            // TODO: implement code to pick box and return the box to its colored square.
+            // TODO: implement code to pick box
+            // turning and goiung back to the last junction
+            robot.turn(180);
+            while (robot.junction.isTurn())
+            {
+                robot.followLine();
+            }
+            // returning the box to the correct colored square and coming back to the initial position
+            _returnBox(robot, color);
         }
     }
-}
+
+    void _returnBox(Robot &robot, ColorName color)
+    {
+        uint8_t initialX = x;
+        uint8_t initialY = y;
+        int8_t deltaX = 0;
+        int8_t deltaY = 0;
+        switch (color)
+        {
+        case COLOR_RED:
+            deltaX = REDSQUARE.x - x;
+            deltaY = REDSQUARE.y - y;
+            break;
+        case COLOR_GREEN:
+            deltaX = GREENSQUARE.x - x;
+            deltaY = GREENSQUARE.y - y;
+            break;
+        case COLOR_BLUE:
+            deltaX = BLUESQUARE.x - x;
+            deltaY = BLUESQUARE.y - y;
+            break;
+        default:
+            break;
+        }
+        _floodfill(robot, deltaX, deltaY);
+
+        // TODO: drop the box
+
+        robot.turn(180);
+        _floodfill(robot, -deltaX, -deltaY);
+    }
+
+    void _floodfill(Robot &robot, int8_t deltaX, int8_t deltaY)
+    {
+        int8_t stepX = (deltaX > 0) ? 1 : -1;
+        int8_t stepY = (deltaY > 0) ? 1 : -1;
+
+        while (deltaX != 0 || deltaY != 0)
+        {
+            while (deltaX != 0)
+            {
+                robot.followLine();
+                if (robot.junction.isTurn())
+                {
+                    deltaX += stepX;
+                }
+                if (robot.frontTof.readRange() < 10)
+                {
+                    robot.turn(90 * stepY);
+                    while (robot.junction.isTurn())
+                    {
+                        robot.followLine();
+                    }
+                    deltaY += stepY;
+                    robot.turn(-90 * stepY);
+                }
+            }
+            robot.turn(90 * stepY);
+            while (deltaY != 0)
+            {
+                robot.followLine();
+                if (robot.junction.isTurn())
+                {
+                    deltaY += stepY;
+                }
+                if (robot.frontTof.readRange() < 10)
+                {
+                    robot.turn(90 * stepX);
+                    while (robot.junction.isTurn())
+                    {
+                        robot.followLine();
+                    }
+                    deltaX += stepX;
+                    robot.turn(-90 * stepX);
+                }
+            }
+        }
+    }
+
+} // namespace Task1
