@@ -26,45 +26,6 @@ namespace Task1
     int8_t boxsFound = 0;
     Box uncoloredBoxs[4];
 
-    void run(Robot &robot)
-    {
-
-        while (robot.junction.isTurn())
-        {
-            robot.followLine();
-        }
-        robot.turn90();
-        int8_t xDir = 1;
-
-        while (y < 7)
-        {
-            while (x < 7)
-            {
-                robot.followLine();
-                if (robot.junction.isTurn())
-                {
-                    x += xDir;
-                }
-                if (robot.leftTof.readRange() < 10) // TODO: tune the value to accurtely detect left box
-                {
-                    _detectBox(robot, xDir, 1);
-                }
-                if (robot.grabberTof.readRange() < 10) // TODO: tune the value to accurtely detect left box
-                {
-                    _detectBox(robot, xDir, -1);
-                }
-                if (robot.frontTof.readRange() < 10) // TODO: tune the value to accurtely detect left box
-                {
-                    _detectBox(robot, xDir, 0);
-                }
-            }
-        }
-        xDir = -1 * xDir; // change thee direction of the x increment direction
-        robot.turn(90 * (xDir));
-        _go2(robot);
-        robot.turn(90 * (xDir));
-    }
-
     void _go2(Robot &robot)
     {
         while (robot.junction.isTurn() && y == 1)
@@ -89,6 +50,82 @@ namespace Task1
             uncoloredBoxs[boxsFound].x = x;
             uncoloredBoxs[boxsFound].y = y;
         }
+    }
+
+    void _floodfill(Robot &robot, int8_t deltaX, int8_t deltaY)
+    {
+        int8_t stepX = (deltaX > 0) ? 1 : -1;
+        int8_t stepY = (deltaY > 0) ? 1 : -1;
+
+        while (deltaX != 0 || deltaY != 0)
+        {
+            while (deltaX != 0)
+            {
+                robot.followLine();
+                if (robot.junction.isTurn())
+                {
+                    deltaX += stepX;
+                }
+                if (robot.frontTof.readRange() < 10)
+                {
+                    robot.turn(90 * stepY);
+                    while (robot.junction.isTurn())
+                    {
+                        robot.followLine();
+                    }
+                    deltaY += stepY;
+                    robot.turn(-90 * stepY);
+                }
+            }
+            robot.turn(90 * stepY);
+            while (deltaY != 0)
+            {
+                robot.followLine();
+                if (robot.junction.isTurn())
+                {
+                    deltaY += stepY;
+                }
+                if (robot.frontTof.readRange() < 10)
+                {
+                    robot.turn(90 * stepX);
+                    while (robot.junction.isTurn())
+                    {
+                        robot.followLine();
+                    }
+                    deltaX += stepX;
+                    robot.turn(-90 * stepX);
+                }
+            }
+        }
+    }
+
+    void _returnBox(Robot &robot, ColorName color)
+    {
+        int8_t deltaX = 0;
+        int8_t deltaY = 0;
+        switch (color)
+        {
+        case COLOR_RED:
+            deltaX = REDSQUARE.x - x;
+            deltaY = REDSQUARE.y - y;
+            break;
+        case COLOR_GREEN:
+            deltaX = GREENSQUARE.x - x;
+            deltaY = GREENSQUARE.y - y;
+            break;
+        case COLOR_BLUE:
+            deltaX = BLUESQUARE.x - x;
+            deltaY = BLUESQUARE.y - y;
+            break;
+        default:
+            break;
+        }
+        _floodfill(robot, deltaX, deltaY);
+
+        // TODO: drop the box
+
+        robot.turn(180);
+        _floodfill(robot, -deltaX, -deltaY);
     }
 
     /**
@@ -175,82 +212,43 @@ namespace Task1
         }
     }
 
-    void _returnBox(Robot &robot, ColorName color)
+    void run(Robot &robot)
     {
-        uint8_t initialX = x;
-        uint8_t initialY = y;
-        int8_t deltaX = 0;
-        int8_t deltaY = 0;
-        switch (color)
+
+        while (robot.junction.isTurn())
         {
-        case COLOR_RED:
-            deltaX = REDSQUARE.x - x;
-            deltaY = REDSQUARE.y - y;
-            break;
-        case COLOR_GREEN:
-            deltaX = GREENSQUARE.x - x;
-            deltaY = GREENSQUARE.y - y;
-            break;
-        case COLOR_BLUE:
-            deltaX = BLUESQUARE.x - x;
-            deltaY = BLUESQUARE.y - y;
-            break;
-        default:
-            break;
+            robot.followLine();
         }
-        _floodfill(robot, deltaX, deltaY);
+        robot.turn90();
+        int8_t xDir = 1;
 
-        // TODO: drop the box
-
-        robot.turn(180);
-        _floodfill(robot, -deltaX, -deltaY);
-    }
-
-    void _floodfill(Robot &robot, int8_t deltaX, int8_t deltaY)
-    {
-        int8_t stepX = (deltaX > 0) ? 1 : -1;
-        int8_t stepY = (deltaY > 0) ? 1 : -1;
-
-        while (deltaX != 0 || deltaY != 0)
+        while (y < 7)
         {
-            while (deltaX != 0)
+            while (x < 7)
             {
                 robot.followLine();
                 if (robot.junction.isTurn())
                 {
-                    deltaX += stepX;
+                    x += xDir;
                 }
-                if (robot.frontTof.readRange() < 10)
+                if (robot.leftTof.readRange() < 10) // TODO: tune the value to accurtely detect left box
                 {
-                    robot.turn(90 * stepY);
-                    while (robot.junction.isTurn())
-                    {
-                        robot.followLine();
-                    }
-                    deltaY += stepY;
-                    robot.turn(-90 * stepY);
+                    _detectBox(robot, xDir, 1);
                 }
-            }
-            robot.turn(90 * stepY);
-            while (deltaY != 0)
-            {
-                robot.followLine();
-                if (robot.junction.isTurn())
+                if (robot.grabberTof.readRange() < 10) // TODO: tune the value to accurtely detect left box
                 {
-                    deltaY += stepY;
+                    _detectBox(robot, xDir, -1);
                 }
-                if (robot.frontTof.readRange() < 10)
+                if (robot.frontTof.readRange() < 10) // TODO: tune the value to accurtely detect left box
                 {
-                    robot.turn(90 * stepX);
-                    while (robot.junction.isTurn())
-                    {
-                        robot.followLine();
-                    }
-                    deltaX += stepX;
-                    robot.turn(-90 * stepX);
+                    _detectBox(robot, xDir, 0);
                 }
             }
         }
+        xDir = -1 * xDir; // change thee direction of the x increment direction
+        robot.turn(90 * (xDir));
+        _go2(robot);
+        robot.turn(90 * (xDir));
     }
 
 } // namespace Task1
