@@ -4,6 +4,7 @@
 #include <IRArray.h>
 #include <Tof.h>
 #include <PID.h>
+#include <Junction.h>
 
 class Robot {
     public:
@@ -15,6 +16,7 @@ class Robot {
         Motor& MotorL;        // dir1, dir2, pwm, encA, encB, ticks/rev
         IRArray& ir;    // number of sensors, pins array
         Tof& tof1;      // xshut, address, sda, scl
+        Junction junction;
 
         void moveStraight();
         void moveStraight(float speed);
