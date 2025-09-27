@@ -1,13 +1,16 @@
 #include "Task3.h"
 #include <Utils.h>
 
-namespace Task3 {
-    void run(Robot& robot) {
+namespace Task3
+{
+    void run(Robot &robot)
+    {
         int acc = 0;
-        while (!robot.junction.isLine()){
+        while (!robot.junction.isLine())
+        {
             robot.moveStraight();
         }
-        
+
         while (robot.junction.isTurn())
         {
             robot.followLine();
@@ -17,7 +20,6 @@ namespace Task3 {
         {
             robot.followLine();
         }
-        
 
         long ticksPer0 = 200; // TODO: tune this value
         while (!robot.junction.isLine())
@@ -37,17 +39,28 @@ namespace Task3 {
             {
                 acc = pushBitMSB(acc, 1);
             }
-            
+
             while (robot.junction.isAllBlack())
             {
                 robot.moveStraight();
             }
-            
         }
         robot.stop();
         Serial.print("Decimal: ");
         Serial.println(acc);
         // TODO: push to EEPROM
 
-    }
+        int8_t balls = acc % 3 + 2;
+        // TODO: push to EEPROM
+
+        while (!robot.junction.isTurn())
+        {
+            robot.followLine();
+        }
+        robot.turn90();
+        while (robot.frontTof.readRange() > 5) // TODO: tune this value to change the wall gap
+        {
+            robot.followLine();
+        }
+        }
 }
