@@ -246,11 +246,11 @@ namespace Task1
                     _detectBox(robot, xDir, 0);
                 }
             }
+            xDir = -1 * xDir; // change thee direction of the x increment direction
+            robot.turn(90 * (xDir));
+            _go2(robot);
+            robot.turn(90 * (xDir));
         }
-        xDir = -1 * xDir; // change thee direction of the x increment direction
-        robot.turn(90 * (xDir));
-        _go2(robot);
-        robot.turn(90 * (xDir));
     }
 
 } // namespace Task1
