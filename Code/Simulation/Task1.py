@@ -569,6 +569,7 @@ ROBOT_MOVE = {
     "up":    lambda r: r.up(),
     "down":  lambda r: r.down(),
 }
+history: set[tuple[int, int]] = set()
 
 def _tail_after_two(path: LinkNode) -> LinkNode:
     """currentPath.next.next or LinkNode('end')"""
@@ -576,24 +577,54 @@ def _tail_after_two(path: LinkNode) -> LinkNode:
 
 # --- path construction & navigation ---------------------------------------
 
-def pathFinder(start: Node, end: Node, concat: LinkNode | None = None):
-    """Greedy straight-line builder that appends 'concat' at the end."""
+def pathFinder(start: Node, end: Node, concat: LinkNode | None = None,
+               visited: set[tuple[int, int]] | None = None,
+               blocks: list[Node] | None = None):
+    """Adaptive path builder that tries x first, then y if blocked."""
     if concat is None:
         concat = LinkNode("end")
+    if visited is None:
+        visited = set()
+    if blocks is None:
+        blocks = []
+
+    pos = (start.x, start.y)
+    if pos in visited:
+        # Already visited this node → stop to avoid loop
+        return concat
+    visited.add(pos)
+
+    # Reached target
+    if start == end:
+        return concat
 
     dx = end.x - start.x
     dy = end.y - start.y
-    if dx == 0 and dy == 0:
-        return concat
 
+    # Helper to move and recurse
+    def try_move(direction: str, new_node: Node):
+        if (new_node.x, new_node.y) in visited or new_node in blocks:
+            return None
+        return LinkNode(direction, pathFinder(new_node, end, concat, visited, blocks))
+
+    # --- Try X direction first ---
     if dx > 0:
-        return LinkNode("right", pathFinder(Node(start.x + 1, start.y), end, concat))
-    if dx < 0:
-        return LinkNode("left",  pathFinder(Node(start.x - 1, start.y), end, concat))
+        attempt = try_move("right", Node(start.x + 1, start.y))
+        if attempt: return attempt
+    elif dx < 0:
+        attempt = try_move("left", Node(start.x - 1, start.y))
+        if attempt: return attempt
+
+    # --- Fallback: Try Y direction ---
     if dy > 0:
-        return LinkNode("up",    pathFinder(Node(start.x,     start.y + 1), end, concat))
-    if dy < 0:
-        return LinkNode("down",  pathFinder(Node(start.x,     start.y - 1), end, concat))
+        attempt = try_move("up", Node(start.x, start.y + 1))
+        if attempt: return attempt
+    elif dy < 0:
+        attempt = try_move("down", Node(start.x, start.y - 1))
+        if attempt: return attempt
+
+    # No move possible
+    return concat
 
 def getPosAfter(start: Node, path: LinkNode, steps: int):
     """Advance 'steps' along the path, returning the resulting Node position."""
@@ -617,6 +648,8 @@ def redirect(start: Node, currentPath: LinkNode, blocks: list[Node] | None = Non
       up/down    -> detour starts with 'right'
     Otherwise return currentPath unchanged.
     """
+    global history
+
     if blocks is None or currentPath is None or currentPath.value == "end":
         return currentPath
 
@@ -627,15 +660,34 @@ def redirect(start: Node, currentPath: LinkNode, blocks: list[Node] | None = Non
     detour_head, neighbor_fn = DIR_FUNCS[dir_name]
     neighbor = neighbor_fn(start)
 
+    pos_dir = (start.x, start.y, dir_name)
+    if pos_dir in history:
+        print("⚠️ Repeated detour pattern:", pos_dir)
+        return _tail_after_two(currentPath)
+    history.add(pos_dir)
+
     if neighbor in blocks:
-        # Build: detour_head -> pathFinder(from detour start to position after 2 steps) -> tail after two
-        detour_start = (start.up()   if detour_head == "up"    else
-                        start.right() if detour_head == "right" else None)
-        new_end  = getPosAfter(start, currentPath, 2)
-        tail     = _tail_after_two(currentPath)
-        return LinkNode(detour_head, pathFinder(detour_start, new_end, tail))
+        # Determine detour start
+        detour_start = (
+            start.up() if detour_head == "up"
+            else start.right() if detour_head == "right"
+            else None
+        )
+        new_end = getPosAfter(start, currentPath, 2)
+        tail = _tail_after_two(currentPath)
+
+        # 🧩 Here's where integration happens:
+        new_path = pathFinder(
+            detour_start,
+            new_end,
+            tail,
+            visited={(x, y) for x, y, _ in history},  # from your global history
+            blocks=blocks
+        )
+        return LinkNode(detour_head, new_path)
 
     return currentPath
+
 
 def move(robot: Robot, path: LinkNode):
     """Execute one step of the given path (no checks)."""
@@ -643,7 +695,6 @@ def move(robot: Robot, path: LinkNode):
         ROBOT_MOVE[path.value](robot)
 
 # --- runtime ---------------------------------------------------------------
-
 blocks: list[Node] = []
 
 def moveOnPath(robot: Robot, path: LinkNode, oldPos: Node):
@@ -687,8 +738,14 @@ def moveOnPath(robot: Robot, path: LinkNode, oldPos: Node):
 
     return path
 
-# --- example main loop (unchanged behavior, just tidier shell) ------------
+def NodeToCord(nodes:list[Node])->list:
+    li = []
+    for node in nodes:
+        li.append(f"({node.x}, {node.y})")
 
+    return li
+
+# --- example main loop (unchanged behavior, just tidier shell) ------------
 def main():
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.RESIZABLE)
@@ -737,6 +794,7 @@ def main():
         draw_diagnostics(screen, robot, *pygame.display.get_surface().get_size(), font)
         pygame.display.flip()
         clock.tick(60)
+        print(NodeToCord(blocks))
 
     pygame.quit()
 
