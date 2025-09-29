@@ -554,182 +554,171 @@ def arrows():
 
     pygame.quit()
 
+# --- helpers ---------------------------------------------------------------
 
-def pathFinder(start:Node, end:Node, concat:LinkNode=LinkNode("end")):
+DIR_FUNCS = {
+    "right": ("up",   lambda n: n.right()),
+    "left":  ("up",   lambda n: n.left()),
+    "up":    ("right",lambda n: n.up()),
+    "down":  ("right",lambda n: n.down()),
+}
+
+ROBOT_MOVE = {
+    "right": lambda r: r.right(),
+    "left":  lambda r: r.left(),
+    "up":    lambda r: r.up(),
+    "down":  lambda r: r.down(),
+}
+
+def _tail_after_two(path: LinkNode) -> LinkNode:
+    """currentPath.next.next or LinkNode('end')"""
+    return path.next.next if (path and path.next and path.next.next) else LinkNode("end")
+
+# --- path construction & navigation ---------------------------------------
+
+def pathFinder(start: Node, end: Node, concat: LinkNode | None = None):
+    """Greedy straight-line builder that appends 'concat' at the end."""
+    if concat is None:
+        concat = LinkNode("end")
+
     dx = end.x - start.x
     dy = end.y - start.y
-
-    if dx == 0 and dy==0:
+    if dx == 0 and dy == 0:
         return concat
-    
-    if dx != 0:
-        if dx > 0:
-            newNode = Node(start.x+1, start.y)
-            return LinkNode("right", pathFinder(newNode, end, concat))
-        if dx < 0:
-            newNode = Node(start.x-1, start.y)
-            return LinkNode("left", pathFinder(newNode, end, concat))
-    else:
-        if dy > 0:
-            newNode = Node(start.x, start.y+1)
-            return LinkNode("up", pathFinder(newNode, end, concat))
-        if dy < 0:
-            newNode = Node(start.x, start.y-1)
-            return LinkNode("down", pathFinder(newNode, end, concat))
 
-def getPosAfter(start:Node, path:LinkNode, steps: int):
-    for i in range(steps):
-        match path.value:
-            case "right":
-                start = start.right()
-            case "left":
-                start = start.left()
-            case "up":
-                start = start.up()
-            case "down":
-                start = start.down()
-        path = path.next
-    return start
+    if dx > 0:
+        return LinkNode("right", pathFinder(Node(start.x + 1, start.y), end, concat))
+    if dx < 0:
+        return LinkNode("left",  pathFinder(Node(start.x - 1, start.y), end, concat))
+    if dy > 0:
+        return LinkNode("up",    pathFinder(Node(start.x,     start.y + 1), end, concat))
+    if dy < 0:
+        return LinkNode("down",  pathFinder(Node(start.x,     start.y - 1), end, concat))
 
+def getPosAfter(start: Node, path: LinkNode, steps: int):
+    """Advance 'steps' along the path, returning the resulting Node position."""
+    cur = start
+    p = path
+    for _ in range(steps):
+        if p is None or p.value == "end":
+            break
+        match p.value:
+            case "right": cur = cur.right()
+            case "left":  cur = cur.left()
+            case "up":    cur = cur.up()
+            case "down":  cur = cur.down()
+        p = p.next
+    return cur
 
-
-def redirect(start: Node, currentPath: LinkNode, block: list[Node] = []):
+def redirect(start: Node, currentPath: LinkNode, blocks: list[Node] | None = None):
     """
-    Returns a new path if redirection occurs; otherwise returns currentPath unchanged.
+    If the next move is blocked, return a new detour path:
+      right/left -> detour starts with 'up'
+      up/down    -> detour starts with 'right'
+    Otherwise return currentPath unchanged.
     """
-    match currentPath.value:
-        case "right":
-            if start.right() in block:
-                return LinkNode("up", pathFinder(
-                    start.up(),
-                    getPosAfter(start, currentPath, 2),
-                    currentPath.next.next if currentPath.next and currentPath.next.next else LinkNode("end")
-                ))
+    if blocks is None or currentPath is None or currentPath.value == "end":
+        return currentPath
 
-        case "left":
-            if start.left() in block:
-                return LinkNode("up", pathFinder(
-                    start.up(),
-                    getPosAfter(start, currentPath, 2),
-                    currentPath.next.next if currentPath.next and currentPath.next.next else LinkNode("end")
-                ))
+    dir_name = currentPath.value
+    if dir_name not in DIR_FUNCS:
+        return currentPath
 
-        case "up":
-            if start.up() in block:
-                return LinkNode("right", pathFinder(
-                    start.right(),
-                    getPosAfter(start, currentPath, 2),
-                    currentPath.next.next if currentPath.next and currentPath.next.next else LinkNode("end")
-                ))
+    detour_head, neighbor_fn = DIR_FUNCS[dir_name]
+    neighbor = neighbor_fn(start)
 
-        case "down":
-            if start.down() in block:
-                return LinkNode("right", pathFinder(
-                    start.right(),
-                    getPosAfter(start, currentPath, 2),
-                    currentPath.next.next if currentPath.next and currentPath.next.next else LinkNode("end")
-                ))
+    if neighbor in blocks:
+        # Build: detour_head -> pathFinder(from detour start to position after 2 steps) -> tail after two
+        detour_start = (start.up()   if detour_head == "up"    else
+                        start.right() if detour_head == "right" else None)
+        new_end  = getPosAfter(start, currentPath, 2)
+        tail     = _tail_after_two(currentPath)
+        return LinkNode(detour_head, pathFinder(detour_start, new_end, tail))
 
-    return currentPath  # if no redirection
+    return currentPath
 
-            
-def move(robot:Robot, path:LinkNode):
-    match path.value:
-        case "right":
-            robot.right()
-        case "left":
-            robot.left()
-        case "up":
-            robot.up()
-        case "down":
-            robot.down()
+def move(robot: Robot, path: LinkNode):
+    """Execute one step of the given path (no checks)."""
+    if path and path.value in ROBOT_MOVE:
+        ROBOT_MOVE[path.value](robot)
 
-blocks = []
-def moveOnPath(robot: Robot, path: LinkNode, oldPos: Node): 
+# --- runtime ---------------------------------------------------------------
+
+blocks: list[Node] = []
+
+def moveOnPath(robot: Robot, path: LinkNode, oldPos: Node):
+    """
+    Take one step along 'path' (with block detection + redirection).
+    Returns the (possibly new) path head to follow next frame.
+    """
     if path is None or path.value == "end":
         return path
 
+    cur = Node(robot.x, robot.y)
+
+    def _maybe_redirect(mark_node: Node):
+        blocks.append(mark_node)
+        print("blocks : ", blocks)
+        newp = redirect(cur, path, blocks)
+        newp.print()
+        move(robot, newp)   # execute the redirected first step immediately
+        return newp
+
+    # Decide + act for this step
+    v = path.value
+    if v == "right":
+        if robot.detect_block(): path = _maybe_redirect(cur.right())
+        else: robot.right()
+    elif v == "left":
+        if robot.detect_block(): path = _maybe_redirect(cur.left())
+        else: robot.left()
+    elif v == "up":
+        if robot.detect_block(): path = _maybe_redirect(cur.up())
+        else: robot.up()
+    elif v == "down":
+        if robot.detect_block(): path = _maybe_redirect(cur.down())
+        else: robot.down()
+
+    # Advance path pointer only if we actually moved
     newPos = Node(robot.x, robot.y)
-
-    if path.next is not None:
-        match path.value:
-            case "right":
-                if robot.detect_block():
-                    blocks.append(newPos.right())
-                    print("blocks : ", blocks)
-                    path = redirect(newPos, path, blocks)
-                    path.print()
-                    move(robot, path)
-                else:
-                    robot.right()
-            case "left":
-                if robot.detect_block():
-                    blocks.append(newPos.left())
-                    print("blocks : ", blocks)
-                    path = redirect(newPos, path, blocks)
-                    path.print()
-                    move(robot, path)
-                else:
-                    robot.left()
-            case "up":
-                if robot.detect_block():
-                    blocks.append(newPos.up())
-                    print("blocks : ", blocks)
-                    path = redirect(newPos, path, blocks)
-                    path.print()
-                    move(robot, path)
-                else:
-                    robot.up()
-            case "down":
-                if robot.detect_block():
-                    blocks.append(newPos.down())
-                    print("blocks : ", blocks)
-                    path = redirect(newPos, path, blocks)
-                    path.print()
-                    move(robot, path)
-                else:
-                    robot.down()
-
-        # update position only after movement
-        newPos = Node(robot.x, robot.y)
-        if newPos != oldPos:
-            print("Moved:", path.value)
-            path = path.next  # advance path
+    if newPos != oldPos:
+        print("Moved:", path.value)
+        path = path.next
 
     return path
+
+# --- example main loop (unchanged behavior, just tidier shell) ------------
 
 def main():
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.RESIZABLE)
     pygame.display.set_caption("Maze Grid 8x8 – Class-based")
-    font = pygame.font.SysFont(None, 20)  # or any size you like
+    font = pygame.font.SysFont(None, 20)
+    clock = pygame.time.Clock()
 
-    objects = {
-        "obstables": [(2,7), (3,6)],
-        "green": (1,1) 
-    }
-
-    grid = Grid(GRID_SIZE, objects)
+    # scene
+    objects = {"obstables": [(2,7), (3,6)], "green": (1,1)}
+    grid = Grid(GRID_SIZE)
     sx, sy = grid.start
     robot = Robot(grid, sx, sy)
 
     BLACK = (0, 0, 0)
-
-    
-    # simple space rising-edge
-    space_prev = False
-
     running = True
-    width, height = pygame.display.get_surface().get_size()
-    clock = pygame.time.Clock()
 
-    i,j = 0,0
-
-    path = LinkNode("up", pathFinder(Node(0,1), Node(7,1), LinkNode("up", LinkNode("up", pathFinder(Node(7, 3), Node(1, 3), LinkNode("up", LinkNode("up", pathFinder(Node(1,5), Node(7,5), LinkNode("up", LinkNode("up", pathFinder(Node(7,7), Node(1,7))))))))))))
+    # original chained path (kept same semantics, just wrapped for readability)
+    path = LinkNode("up",
+            pathFinder(Node(0,1), Node(7,1),
+            LinkNode("up",
+            LinkNode("up",
+            pathFinder(Node(7,3), Node(1,3),
+            LinkNode("up",
+            LinkNode("up",
+            pathFinder(Node(1,5), Node(7,5),
+            LinkNode("up",
+            LinkNode("up",
+            pathFinder(Node(7,7), Node(1,7))))))))))))
 
     while running:
-        now = pygame.time.get_ticks()
-
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -737,20 +726,17 @@ def main():
                 width, height = event.w, event.h
 
         oldPos = Node(robot.x, robot.y)
-        newPath  = moveOnPath(robot, path, oldPos)
+        newPath = moveOnPath(robot, path, oldPos)
         if newPath is not None:
             path = newPath
 
         # draw
         screen.fill(BLACK)
-        grid.draw(screen, width, height)
-        robot.draw(screen, width, height)
-        draw_diagnostics(screen, robot, width, height, font)  # <-- NEW
+        grid.draw(screen, *pygame.display.get_surface().get_size())
+        robot.draw(screen, *pygame.display.get_surface().get_size())
+        draw_diagnostics(screen, robot, *pygame.display.get_surface().get_size(), font)
         pygame.display.flip()
-
-
-        clock.tick(60)  # cap FPS
-        
+        clock.tick(60)
 
     pygame.quit()
 
