@@ -633,6 +633,16 @@ def redirect(start: Node, currentPath: LinkNode, block: list[Node] = []):
     return currentPath  # if no redirection
 
             
+def move(robot:Robot, path:LinkNode):
+    match path.value:
+        case "right":
+            robot.right()
+        case "left":
+            robot.left()
+        case "up":
+            robot.up()
+        case "down":
+            robot.down()
 
 blocks = []
 def moveOnPath(robot: Robot, path: LinkNode, oldPos: Node): 
@@ -649,8 +659,7 @@ def moveOnPath(robot: Robot, path: LinkNode, oldPos: Node):
                     print("blocks : ", blocks)
                     path = redirect(newPos, path, blocks)
                     path.print()
-                    # moveOnPath(robot, path, oldPos)   FIX: code runs to a infinite recurssion call though the path planning is done correct
-                    exit()  # FIX: remove after finishing above fix
+                    move(robot, path)
                 else:
                     robot.right()
             case "left":
@@ -659,8 +668,7 @@ def moveOnPath(robot: Robot, path: LinkNode, oldPos: Node):
                     print("blocks : ", blocks)
                     path = redirect(newPos, path, blocks)
                     path.print()
-                    # moveOnPath(robot, path, oldPos)   FIX: code runs to a infinite recurssion call though the path planning is done correct
-                    exit()  # FIX: remove after finishing above fix
+                    move(robot, path)
                 else:
                     robot.left()
             case "up":
@@ -669,8 +677,7 @@ def moveOnPath(robot: Robot, path: LinkNode, oldPos: Node):
                     print("blocks : ", blocks)
                     path = redirect(newPos, path, blocks)
                     path.print()
-                    # moveOnPath(robot, path, oldPos)   FIX: code runs to a infinite recurssion call though the path planning is done correct
-                    exit()  # FIX: remove after finishing above fix
+                    move(robot, path)
                 else:
                     robot.up()
             case "down":
@@ -679,8 +686,7 @@ def moveOnPath(robot: Robot, path: LinkNode, oldPos: Node):
                     print("blocks : ", blocks)
                     path = redirect(newPos, path, blocks)
                     path.print()
-                    # moveOnPath(robot, path, oldPos)   FIX: code runs to a infinite recurssion call though the path planning is done correct
-                    exit()  # FIX: remove after finishing above fix
+                    move(robot, path)
                 else:
                     robot.down()
 
@@ -699,7 +705,7 @@ def main():
     font = pygame.font.SysFont(None, 20)  # or any size you like
 
     objects = {
-        "obstables": [(2,7), (2,2)],
+        "obstables": [(2,7), (3,6)],
         "green": (1,1) 
     }
 
