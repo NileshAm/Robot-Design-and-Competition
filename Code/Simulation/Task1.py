@@ -725,7 +725,7 @@ def main():
 
     i,j = 0,0
 
-    path = LinkNode("up", pathFinder(Node(0,1), Node(7,1)))
+    path = LinkNode("up", pathFinder(Node(0,1), Node(7,1), LinkNode("up", LinkNode("up", pathFinder(Node(7, 3), Node(1, 3), LinkNode("up", LinkNode("up", pathFinder(Node(1,5), Node(7,5), LinkNode("up", LinkNode("up", pathFinder(Node(7,7), Node(1,7))))))))))))
 
     while running:
         now = pygame.time.get_ticks()
