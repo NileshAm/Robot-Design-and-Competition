@@ -1,59 +1,94 @@
 #include "MenuSystem.h"
+#include <Arduino.h>
 
-MenuSystem::MenuSystem(OLED &oled, pushbutton &up, pushbutton &down, pushbutton &select)
-: _oled(oled), _btnUp(up), _btnDown(down), _btnSelect(select), _currentSelection(0) {}
+MenuSystem::MenuSystem(OLED &oled, pushbutton &btnUp, pushbutton &btnDown, pushbutton &btnSelect, ColorSensor &sensor)
+    : _oled(oled), _btnUp(btnUp), _btnDown(btnDown), _btnSelect(btnSelect), _sensor(sensor) {}
 
 void MenuSystem::begin() {
-    showMenu();
+    drawMenu();
 }
 
 void MenuSystem::update() {
+    // Navigate Up
     if (_btnUp.stateChanged()) {
-        _currentSelection--;
-        if (_currentSelection < 0) _currentSelection = _menuLength - 1;
-        showMenu();
+        currentIndex--;
+        if (currentIndex < 0) currentIndex = menuCount - 1;
+        drawMenu();
     }
 
+    // Navigate Down
     if (_btnDown.stateChanged()) {
-        _currentSelection++;
-        if (_currentSelection >= _menuLength) _currentSelection = 0;
-        showMenu();
+        currentIndex++;
+        if (currentIndex >= menuCount) currentIndex = 0;
+        drawMenu();
     }
 
+    // Select button
     if (_btnSelect.stateChanged()) {
-        runAction(_currentSelection);
-    }
-}
+        _oled.begin();
+        _oled.clear();
 
-void MenuSystem::showMenu() {
-    _oled.clear();
-    for (int i = 0; i < _menuLength; i++) {
-        if (i == _currentSelection) {
-            _oled.displayText("> " + String(_menuItems[i]), 0, i * 10, 1);
-        } else {
-            _oled.displayText(_menuItems[i], 10, i * 10, 1);
+         if (currentIndex == 0) { // Option 1: Calibration 
+                _oled.clear();
+                _oled.displayText("White", 0, 0, 1);
+                _oled.display();
+                delay(2000);
+                //_sensor.calibrate(150, true);
+                _oled.clear();
+                _oled.displayText("Black", 0, 0, 1);
+                _oled.display();
+                delay(2000);
+                //_sensor.calibrate(150, false);
+                _oled.clear();
+                _oled.displayText("Done", 0, 0, 1);
+                _oled.display();
+                delay(2000);
+
+            //runCalibration();
+
+            drawMenu();
+        } else if (currentIndex == 1) { // Option 2
+            _oled.displayCenteredText("Option 2 selected", 1);
+            _oled.display();
+            Serial.println("Option 2 selected");
+            delay(2000);
+            drawMenu();
+        } else if (currentIndex == 2) { // Option 3
+            _oled.displayCenteredText("Option 3 selected", 1);
+            _oled.display();
+            Serial.println("Option 3 selected");
+            delay(2000);
+            drawMenu();
         }
     }
+}
+
+void MenuSystem::drawMenu() {
+    _oled.clear();
+    for (int i = 0; i < menuCount; i++) {
+        String text = (i == currentIndex ? "> " : "  ") + menuItems[i];
+        _oled.displayText(text, 0, i * 10, 1);
+    }
     _oled.display();
 }
 
-void MenuSystem::runAction(int selection) {
+void MenuSystem::runCalibration() {
+    _oled.begin();
     _oled.clear();
-    switch (selection) {
-        case 0:
-            _oled.displayCenteredText("Hello World!", 2);
-            break;
-        case 1:
-            _oled.drawLine(0, 0, 127, 63);
-            break;
-        case 2:
-            _oled.drawRect(10, 10, 80, 40);
-            break;
-        case 3:
-            _oled.displayCenteredText("Cleared!", 2);
-            break;
-    }
+    _oled.displayText("White", 0, 0, 1);
     _oled.display();
+    delay(3000);
+    //_sensor.calibrate(150, true);
+
+    _oled.clear();
+    _oled.displayText("Black", 0, 0, 1);
+    _oled.display();
+    delay(3000);
+    //_sensor.calibrate(150, false);
+
+    _oled.clear();
+    _oled.displayText("Done", 0, 0, 1);
+    _oled.display();
+    Serial.println("Calibration complete!");
     delay(2000);
-    showMenu();
 }

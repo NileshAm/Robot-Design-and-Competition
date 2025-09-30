@@ -1,30 +1,27 @@
 #pragma once
-#include <Arduino.h>
 #include "OLED.h"
 #include "pushbutton.h"
+#include "ColorSensor.h"
 
 class MenuSystem {
 public:
-    MenuSystem(OLED &oled, pushbutton &up, pushbutton &down, pushbutton &select);
+    MenuSystem(OLED &oled, pushbutton &btnUp, pushbutton &btnDown, pushbutton &btnSelect, ColorSensor &sensor);
 
-    void begin();
-    void update();
+    void begin();   // Display initial menu
+    void update();  // Handle button presses and run actions
 
 private:
     OLED &_oled;
     pushbutton &_btnUp;
     pushbutton &_btnDown;
     pushbutton &_btnSelect;
+    ColorSensor &_sensor;
 
-    void showMenu();
-    void runAction(int selection);
+    // Hardcoded menu items
+    String menuItems[3] = {"Calibrate Color", "Calibrate IR", "Run All"};
+    int menuCount = 3;
+    int currentIndex = 0;
 
-    int _currentSelection;
-    static const int _menuLength = 4;
-    const char* _menuItems[_menuLength] = {
-        "Show Hello",
-        "Draw Line",
-        "Draw Rectangle",
-        "Clear Screen"
-    };
+    void drawMenu();         // Draw menu on OLED
+    void runCalibration();   // Run color sensor calibration
 };
