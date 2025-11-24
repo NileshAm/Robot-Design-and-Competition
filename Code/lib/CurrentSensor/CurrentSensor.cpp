@@ -1,9 +1,20 @@
 #include "CurrentSensor.h"
 
-CurrentSensor::CurrentSensor(uint8_t pin, float sensitivity, float offset, float spikeThreshold)
-    : _pin(pin), _sensitivity(sensitivity), _offset(offset),
-      _spikeThreshold(spikeThreshold), _lastReading(0) {
+CurrentSensor::CurrentSensor(uint8_t pin, float sensitivity, float spikeThreshold)
+    : _pin(pin), _sensitivity(sensitivity), _spikeThreshold(spikeThreshold),
+      _lastReading(0), _offset(2.5) { // default 0A voltage
     pinMode(_pin, INPUT);
+}
+
+void CurrentSensor::begin(int samples, int delayMs) {
+    // Auto-calibrate zero-current offset
+    long sum = 0;
+    for (int i = 0; i < samples; i++) {
+        sum += analogRead(_pin);
+        delay(delayMs);
+    }
+    float adcAvg = sum / (float)samples;
+    _offset = adcAvg * 5.0 / 1023.0; // convert to voltage
 }
 
 float CurrentSensor::read() {
@@ -15,11 +26,11 @@ float CurrentSensor::read() {
     }
     float avg = sum / (float)samples;
 
-    // Convert ADC reading (10-bit, 5V reference)
     float voltage = (avg / 1023.0) * 5.0;
-
-    // Convert voltage to current (A)
     float current = (voltage - _offset) / _sensitivity;
+
+    // Apply deadband to ignore small noise
+    if (abs(current) < _deadband) current = 0;
 
     return current;
 }
@@ -30,10 +41,6 @@ bool CurrentSensor::isSpike() {
     bool spike = diff > _spikeThreshold;
     _lastReading = current;
     return spike;
-}
-
-void CurrentSensor::setOffset(float offset) {
-    _offset = offset;
 }
 
 void CurrentSensor::setSpikeThreshold(float threshold) {
