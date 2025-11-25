@@ -3,6 +3,7 @@
 #include "pushbutton.h"
 #include "ColorSensor.h"
 #include "MenuSystem.h"
+#include "Robot.h"
 
 // OLED
 OLED oled;
@@ -15,8 +16,11 @@ pushbutton btnSelect(4);
 // Color sensor
 ColorSensor sensor(4, 5, 6, 7, 8);
 
+Robot robot;
+
 // Menu system
-MenuSystem menu(oled, btnUp, btnDown, btnSelect, sensor);
+MenuSystem menu(oled, btnUp, btnDown, btnSelect, sensor, robot);
+
 
 void setup() {
     Serial.begin(9600);
