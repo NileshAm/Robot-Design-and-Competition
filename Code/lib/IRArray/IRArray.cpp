@@ -79,7 +79,7 @@ void IRArray::digitalRead(bool* out) {
     // use readNormalized()
     double* norm = new double[_n];
     readNormalized(norm);
-    for (uint8_t i=0;i<_n;++i) out[i] = (norm[i] >= _threshold);
+    for (uint8_t i=0;i<_n;++i) out[i] = (norm[i] <= _threshold);
     delete[] norm;
 }
 

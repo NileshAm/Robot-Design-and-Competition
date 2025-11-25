@@ -5,18 +5,26 @@
 #include <Tof.h>
 #include <PID.h>
 #include <Junction.h>
+#include <ColorSensor.h>
+#include <OLED.h>
 
 class Robot {
     public:
         using TurnCallback = void (*)(Robot*);   // non-capturing lambda or plain function
 
-        Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& Tof);
+        Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof& leftTof, Tof& frontTopTof, Tof& grabberTof, ColorSensor& grabberSensor, ColorSensor& boxColorSensor, OLED& oled);
 
         Motor& MotorR;        // dir1, dir2, pwm, encA, encB, ticks/rev
         Motor& MotorL;        // dir1, dir2, pwm, encA, encB, ticks/rev
         IRArray& ir;    // number of sensors, pins array
-        Tof& tof1;      // xshut, address, sda, scl
+        Tof& frontTof;      // xshut, address, sda, scl
+        Tof& leftTof;      // xshut, address, sda, scl
+        Tof& frontTopTof;      // xshut, address, sda, scl
+        Tof& grabberTof;      // xshut, address, sda, scl //act as the right tof also
+        ColorSensor& grabberSensor;
+        ColorSensor& boxColorSensor;
         Junction junction;
+        OLED& oled;
 
         void moveStraight();
         void moveStraight(float speed);
