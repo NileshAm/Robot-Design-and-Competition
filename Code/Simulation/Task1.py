@@ -1,804 +1,312 @@
 import pygame
+import sys
 import random
-import math
 
-from Datatypes import Node, LinkNode
+# --- Constants ---
+SCREEN_WIDTH = 600
+SCREEN_HEIGHT = 650
+GRID_SIZE = 9  # Indices 0 to 8
+CELL_SIZE = 55 
+MARGIN = 50
 
-# ---------- Constants ----------
-GRID_SIZE = 8
-PADDING_RATIO = 0.1
-WINDOW_HEIGHT = 600
-WINDOW_WIDTH = 600
-N_OBSTACLES = 4  # number of obstacles
+# Colors
+COLOR_BG = (10, 10, 10)       
+COLOR_GRID = (80, 80, 80)     
+COLOR_OBS = (255, 255, 255)   
+COLOR_ROBOT = (255, 255, 0)   
+COLOR_SCAN_LINE = (0, 255, 255) 
+COLOR_BUTTON = (50, 100, 200)
+COLOR_BUTTON_HOVER = (70, 120, 220)
 
-# ---------- Data classes ----------
-class GridNode:
-    """
-    state ∈ {
-      'empty','obstacle','start','end',
-      'red_dropoff','blue_dropoff','green_dropoff',
-      'red_pickup','blue_pickup','green_pickup'
-    }
-    If a box is dropped on a drop-off, we show it via box_color overlay ('red'/'blue'/'green').
-    """
-    def __init__(self, x, y, state):
-        self.x, self.y = x, y
-        self.state = state
-        self.walkable = state in {
-            'empty', 'start', 'end',
-            'red_dropoff', 'blue_dropoff', 'green_dropoff',
-            'red_pickup', 'blue_pickup', 'green_pickup'
-        }
-        self.box_color = None  # overlayed box on drop-off tiles (None/'red'/'blue'/'green')
+# --- Classes ---
 
-class Grid:
-    def __init__(self, grid_size=GRID_SIZE, objects=None):
-        self.size = grid_size
-        # build empty grid
-        self.nodes = [[GridNode(x, y, 'empty') for x in range(self.size + 1)]
-                      for y in range(self.size + 1)]
+class GridMap:
+    def __init__(self):
+        self.obstacles = {} 
+        self.targets = {}
+        self.known_obstacles = set() 
+        self.recorded_items = [] 
+        
+        # Start with a random map
+        self.generate_random_map()
+        
+        # Add Targets (Top Line)
+        self.add_target(2, 0, (255, 0, 0))   # Red
+        self.add_target(4, 0, (0, 255, 0))   # Green
+        self.add_target(6, 0, (0, 0, 255))   # Blue
 
-        # fixed nodes
-        self.start = (0, 8)
-        self.end = (8, 0)
-        self.dropoffs = {
-            (2, 0): 'red_dropoff',
-            (4, 0): 'blue_dropoff',
-            (6, 0): 'green_dropoff',
-        }
+    def generate_random_map(self):
+        count = 0
+        limit = 6  # <--- UPDATED: Strictly 6 boxes
+        self.obstacles = {}
+        
+        while count < limit:
+            # Range 1 to 7 ensures boxes are NEVER on the boundary lines (0 or 8)
+            rx = random.randint(1, 7)
+            ry = random.randint(1, 7) 
+            
+            # Safety checks (don't spawn on top of targets or robot start)
+            if ry == 0: continue  
+            if ry == 8 and rx == 0: continue 
+            
+            if (rx, ry) not in self.obstacles:
+                self.add_obstacle(rx, ry)
+                count += 1
 
-        # --- reserve cells that must not be overwritten ---
-        reserved = set()
-        reserved.add(self.start)
-        reserved.add(self.end)
-        reserved.update(self.dropoffs.keys())
+    def add_obstacle(self, x, y):
+        self.obstacles[(x, y)] = 'obstacle'
 
-        if objects is not None:
-            # accept both "obstacles" and the common typo "obstables"
-            obj_obstacles = objects.get("obstacles", objects.get("obstables", []))
+    def add_target(self, x, y, color):
+        self.targets[(x, y)] = color
 
-            # place obstacles
-            for (ox, oy) in obj_obstacles:
-                if 0 <= ox <= self.size and 0 <= oy <= self.size and (ox, oy) not in reserved:
-                    self.nodes[oy][ox] = GridNode(ox, oy, 'obstacle')
+    def is_obstacle(self, x, y):
+        return (x, y) in self.obstacles
 
-            # place color pickups (keys: "red", "blue", "green"), e.g. "green": (1,2)
-            for color in ("red", "blue", "green"):
-                if color in objects:
-                    px, py = objects[color]
-                    if 0 <= px <= self.size and 0 <= py <= self.size and (px, py) not in reserved:
-                        self.nodes[py][px] = GridNode(px, py, f"{color}_pickup")
-        else:
-            # ---- original random placement fallback ----
-            # obstacles
-            obstacles = []
-            while len(obstacles) < N_OBSTACLES:
-                x = random.randint(1, self.size - 1)
-                y = random.randint(1, self.size - 1)
-                if (x, y) not in obstacles and (x, y) not in reserved:
-                    obstacles.append((x, y))
-                    self.nodes[y][x] = GridNode(x, y, 'obstacle')
-
-            # two random pickup colors
-            colors_to_place = random.sample(['red', 'blue', 'green'], 2)
-            pickup_positions = []
-            while len(pickup_positions) < 2:
-                x = random.randint(0, self.size)
-                y = random.randint(1, self.size - 1)  # avoid y=0 (drop-off row)
-                if (x, y) not in reserved and (x, y) not in pickup_positions:
-                    pickup_positions.append((x, y))
-
-            for (x, y), color in zip(pickup_positions, colors_to_place):
-                self.nodes[y][x] = GridNode(x, y, f'{color}_pickup')
-
-        # ---- place fixed nodes last (these override anything underneath) ----
-        sx, sy = self.start
-        ex, ey = self.end
-        self.nodes[sy][sx] = GridNode(sx, sy, 'start')
-        self.nodes[ey][ex] = GridNode(ex, ey, 'end')
-        for (x, y), s in self.dropoffs.items():
-            self.nodes[y][x] = GridNode(x, y, s)
-
-
-    # ---- helpers / physics ----
-    def in_bounds(self, x, y):
-        return 0 <= x <= self.size and 0 <= y <= self.size
-
-    def node(self, x, y) -> GridNode:
-        return self.nodes[y][x]
-
-    def is_dropoff(self, x, y):
-        return self.node(x, y).state in {'red_dropoff', 'blue_dropoff', 'green_dropoff'}
-
-    def has_box(self, x, y):
-        n = self.node(x, y)
-        return (n.state in {'red_pickup', 'blue_pickup', 'green_pickup'}) or (n.box_color in {'red', 'blue', 'green'})
-
-    def pickup_color_on_tile(self, x, y):
-        n = self.node(x, y)
-        if n.state == 'red_pickup': return 'red'
-        if n.state == 'blue_pickup': return 'blue'
-        if n.state == 'green_pickup': return 'green'
-        # overlay on dropoff
-        if n.box_color in {'red', 'blue', 'green'}:
-            return n.box_color
-        return None
-
-    def clear_pickup_from_tile(self, x, y):
-        """Remove a pickup or overlayed box from this tile, turning pickups into empty; dropoffs keep their state."""
-        n = self.node(x, y)
-        if n.state in {'red_pickup', 'blue_pickup', 'green_pickup'}:
-            self.nodes[y][x] = GridNode(x, y, 'empty')
-        elif n.state in {'red_dropoff', 'blue_dropoff', 'green_dropoff'}:
-            n.box_color = None  # just clear overlay
-
-    def place_pickup_on_empty(self, x, y, color):
-        """Place a pickup tile on an empty cell."""
-        assert color in {'red', 'blue', 'green'}
-        self.nodes[y][x] = GridNode(x, y, f'{color}_pickup')
-
-    def drop_on_dropoff(self, x, y, color):
-        """Overlay a box on a drop-off tile (state unchanged)."""
-        assert self.is_dropoff(x, y)
-        self.node(x, y).box_color = color
-
-    def can_enter(self, x, y, dx, dy):
-        """
-        Movement rule:
-        - must be in bounds and walkable
-        - if the destination tile "has a box" (pickup tile OR dropoff with overlay),
-          you may NOT enter horizontally (long side). Vertical entry allowed.
-        """
-        if not self.in_bounds(x, y):
-            return False
-        n = self.node(x, y)
-        if not n.walkable:
-            return False
-        entering_long_side = (dx != 0 and dy == 0)  # left/right
-        if self.has_box(x, y) and entering_long_side:
-            return False
-        return True
-
-    # ---- drawing ----
-    def draw(self, surface, width, height):
-        min_dim = min(width, height)
-        padding = int(PADDING_RATIO * min_dim)
-        grid_area = min_dim - 2 * padding
-        cell_size = grid_area // self.size
-
-        WHITE = (220, 220, 220)
-
-        # grid lines
-        for x in range(self.size + 1):
-            pygame.draw.line(
-                surface, WHITE,
-                (padding + x * cell_size, padding),
-                (padding + x * cell_size, padding + self.size * cell_size), 5
-            )
-        for y in range(self.size + 1):
-            pygame.draw.line(
-                surface, WHITE,
-                (padding, padding + y * cell_size),
-                (padding + self.size * cell_size, padding + y * cell_size), 5
-            )
-
-        # cells
-        for row in self.nodes:
-            for n in row:
-                self._draw_node(surface, width, height, n, cell_size, padding)
-
-    def _draw_node(self, surface, width, height, n: GridNode, cell_size, padding):
-        colors = {
-            'obstacle': (220, 220, 220),
-            'start': (100, 100, 100),
-            'end': (100, 100, 100),
-            'red_dropoff': (255, 100, 100),
-            'blue_dropoff': (100, 100, 255),
-            'green_dropoff': (100, 255, 100),
-            'red_pickup': (255, 0, 0),
-            'blue_pickup': (0, 0, 255),
-            'green_pickup': (0, 255, 0),
-        }
-        color = colors.get(n.state)
-        if not color:
-            return
-
-        dropoff_states = {'red_dropoff', 'blue_dropoff', 'green_dropoff'}
-        pickup_states = {'red_pickup', 'blue_pickup', 'green_pickup'}
-
-        if n.state in dropoff_states:
-            rect = pygame.Rect(
-                padding + n.x * cell_size - cell_size // 2 + 5,
-                padding + n.y * cell_size - cell_size // 2 + 5,
-                cell_size - 10,
-                cell_size - 10
-            )
-        elif n.state in pickup_states:
-            # tall, narrow pickup box
-            rect = pygame.Rect(
-                padding + n.x * cell_size - cell_size // 10,
-                padding + n.y * cell_size - cell_size // 5,
-                cell_size // 5,
-                cell_size // 2
-            )
-        else:
-            rect = pygame.Rect(
-                padding + n.x * cell_size - cell_size // 2 + 20,
-                padding + n.y * cell_size - cell_size // 2 + 20,
-                cell_size - 40,
-                cell_size - 40
-            )
-
-        pygame.draw.rect(surface, color, rect)
-
-        # overlayed box (if any) on dropoff
-        if n.state in {'red_dropoff', 'blue_dropoff', 'green_dropoff'} and n.box_color in {'red', 'blue', 'green'}:
-            oc = (255, 0, 0) if n.box_color == 'red' else (0, 0, 255) if n.box_color == 'blue' else (0, 255, 0)
-            overlay_rect = pygame.Rect(
-                padding + n.x * cell_size - cell_size // 10,
-                padding + n.y * cell_size - cell_size // 5,
-                cell_size // 5,
-                cell_size // 2
-            )
-            pygame.draw.rect(surface, oc, overlay_rect)
+    def get_target(self, x, y):
+        return self.targets.get((x, y))
 
 class Robot:
-    """
-    Player-controlled robot that encapsulates all game physics:
-    - Movement with cooldown (left/right/up/down)
-      • First rotates to face the requested direction (no move this tick),
-        then on the next call it moves if cooldown allows.
-    - In-place rotation via rotate_inplace('left'/'right'/deg)
-    - Long-side blocking onto box tiles (delegated to Grid.can_enter)
-    - Short-side-only pickup (must have approached vertically)
-    - Drop on any drop-off (overlay), or on empty (spawns pickup)
-    - Sensing:
-        • detect_box_left/front/right  (colored boxes only)
-        • detect_block(where)          (obstacle OR box) — single-direction, like color peek
-        • peek_box_color(where)        ('red'|'blue'|'green'|None)
-    """
-    def __init__(self, grid, x, y):
-        self.grid = grid
-        self.x, self.y = x, y
-        self.carrying = None          # 'red' | 'blue' | 'green' | None
-        self.orientation = 0          # 0:right, 90:up, 180:left, 270:down
-        self.last_step = None         # (dx, dy) of last successful move
-
-        # movement throttling
-        self._last_move_time = 0
-        self.MOVE_COOLDOWN_MS = 150
-
-    # ---------- In-place rotation ----------
-    def rotate_inplace(self, turn='left'):
-        """
-        Rotate without moving.
-        turn:
-          - 'left'  -> -90°
-          - 'right' -> +90°
-          - int/float -> absolute orientation in degrees (e.g., 0/90/180/270)
-        """
-        if isinstance(turn, (int, float)):
-            self.orientation = int(turn) % 360
-            return
-        t = str(turn).lower()
-        if t == 'left':
-            delta = -90
-        elif t == 'right':
-            delta = +90
-        else:
-            raise ValueError("rotate_inplace(turn) expects 'left', 'right', or a degree number")
-        self.orientation = (self.orientation + delta) % 360
-
-    # ---------- Movement API ----------
-    def left(self, now_ms=None):
-        self._move(-1, 0, 180, now_ms)
-
-    def right(self, now_ms=None):
-        self._move(1, 0, 0, now_ms)
-
-    def up(self, now_ms=None):
-        self._move(0, -1, 90, now_ms)
-
-    def down(self, now_ms=None):
-        self._move(0, 1, 270, now_ms)
-
-    # ---------- Pick / Drop ----------
-    def pickup(self):
-        """
-        If not carrying: pick up a box on the current tile (pickup tile or drop-off overlay),
-        BUT ONLY if the robot approached this tile vertically (short side).
-        If carrying: drop onto any drop-off (overlay) or onto empty (spawns pickup).
-        """
-        cx, cy = self.x, self.y
-        node = self.grid.node(cx, cy)
-
-        if self.carrying is None:
-            # Require short-side (vertical) approach: dy != 0 on last successful step
-            approached_short = (self.last_step is not None and self.last_step[1] != 0)
-            if not approached_short:
-                return
-
-            color_here = self.grid.pickup_color_on_tile(cx, cy)
-            if color_here in {'red', 'blue', 'green'}:
-                self.carrying = color_here
-                self.grid.clear_pickup_from_tile(cx, cy)  # remove pickup or overlay
-
-        else:
-            # Drop on ANY drop-off → overlay
-            if self.grid.is_dropoff(cx, cy):
-                self.grid.drop_on_dropoff(cx, cy, self.carrying)
-                self.carrying = None
-                return
-
-            # Drop on empty → convert to pickup tile
-            if node.state == 'empty':
-                self.grid.place_pickup_on_empty(cx, cy, self.carrying)
-                self.carrying = None
-
-    # ---------- Sensing (separate helpers) ----------
-    # Boxes ONLY (colored pickups or drop-off overlays)
-    def detect_box_left(self) -> bool:
-        nx, ny = self._neighbor_coords_lfr()["left"]
-        return self.grid.in_bounds(nx, ny) and self.grid.has_box(nx, ny)
-
-    def detect_box_front(self) -> bool:
-        nx, ny = self._neighbor_coords_lfr()["front"]
-        return self.grid.in_bounds(nx, ny) and self.grid.has_box(nx, ny)
-
-    def detect_box_right(self) -> bool:
-        nx, ny = self._neighbor_coords_lfr()["right"]
-        return self.grid.in_bounds(nx, ny) and self.grid.has_box(nx, ny)
-
-    # Blocking = obstacle OR box (single-direction, like color sensing)
-    def detect_block(self, where="front") -> bool:
-        where = where.lower()
-        if where not in {"left", "front", "right"}:
-            raise ValueError("where must be one of {'left','front','right'}")
-        nx, ny = self._neighbor_coords_lfr()[where]
-        if not self.grid.in_bounds(nx, ny):
-            return False
-        n = self.grid.node(nx, ny)
-        return (n.state == 'obstacle') or self.grid.has_box(nx, ny)
-
-    def peek_box_color(self, where="front"):
-        """
-        Return 'red' | 'blue' | 'green' | None for the adjacent tile in
-        where ∈ {'left','front','right'}.
-        Works for both pickup tiles and drop-off overlays (never 'obstacle').
-        """
-        where = where.lower()
-        if where not in {"left", "front", "right"}:
-            raise ValueError("where must be one of {'left','front','right'}")
-        nx, ny = self._neighbor_coords_lfr()[where]
-        if not self.grid.in_bounds(nx, ny):
-            return None
-        return self.grid.pickup_color_on_tile(nx, ny)
-
-    # ---------- Drawing ----------
-    def draw(self, surface, width, height):
-        min_dim = min(width, height)
-        padding = int(PADDING_RATIO * min_dim)
-        grid_area = min_dim - 2 * padding
-        cell_size = grid_area // self.grid.size
-
-        center_x = padding + self.x * cell_size
-        center_y = padding + self.y * cell_size
-        radius = cell_size // 4
-
-        # body
-        pygame.draw.ellipse(
-            surface, (255, 255, 0),
-            (center_x - radius, center_y - radius, 2 * radius, 2 * radius)
-        )
-
-        # direction indicator
-        dir_len = radius
-        ang = math.radians(self.orientation)
-        end_x = center_x + dir_len * math.cos(ang)
-        end_y = center_y - dir_len * math.sin(ang)
-        pygame.draw.line(surface, (0, 0, 0), (center_x, center_y), (end_x, end_y), 3)
-
-        # carried item bubble
-        if self.carrying:
-            col = (255, 0, 0) if self.carrying == 'red' else (0, 0, 255) if self.carrying == 'blue' else (0, 255, 0)
-            pygame.draw.circle(surface, col, (center_x, center_y - radius - 10), radius // 2)
-
-    # ---------- Internals ----------
-    def _move(self, dx, dy, face_deg, now_ms=None):
-        """
-        Rotate-first behavior:
-          - If not facing the requested direction, just rotate this tick (no move).
-          - If already facing, move if cooldown allows and Grid.can_enter(..) permits.
-        """
-        # Always rotate immediately (no cooldown on rotation)
-        desired = face_deg % 360
-        if (self.orientation % 360) != desired:
-            self.orientation = desired
-            return  # rotate-only this tick
-
-        # Movement cooldown check
-        if now_ms is None:
-            now_ms = pygame.time.get_ticks()
-        if now_ms - self._last_move_time < self.MOVE_COOLDOWN_MS:
-            return
-
-        # Attempt to move
-        nx, ny = self.x + dx, self.y + dy
-        if self.grid.can_enter(nx, ny, dx, dy):
-            self.x, self.y = nx, ny
-            self.last_step = (dx, dy)
-
-        self._last_move_time = now_ms
-
-    def _neighbor_coords_lfr(self):
-        """Return neighbor coords for left/front/right based on current orientation."""
-        # Quantize orientation to nearest axis (0/90/180/270)
-        theta = int(round(self.orientation / 90.0)) * 90 % 360
-
-        if theta == 0:        # facing right
-            fdx, fdy = (1, 0)
-        elif theta == 90:     # facing up
-            fdx, fdy = (0, -1)
-        elif theta == 180:    # facing left
-            fdx, fdy = (-1, 0)
-        else:                 # 270, facing down
-            fdx, fdy = (0, 1)
-
-        # left/right are perpendicular to front
-        ldx, ldy = -fdy, fdx
-        rdx, rdy = fdy, -fdx
-
-        return {
-            "left":  (self.x + ldx,  self.y + ldy),
-            "front": (self.x + fdx,  self.y + fdy),
-            "right": (self.x + rdx,  self.y + rdy),
-        }
-
-
-def draw_diagnostics(surface, robot, width, height, font):
-    # Box sensors
-    box_l  = robot.detect_box_left()
-    box_f  = robot.detect_box_front()
-    box_r  = robot.detect_box_right()
-
-    # Single-direction blocking (front), like color sensing
-    blk_f  = robot.detect_block("front")
-    front_col = robot.peek_box_color("front")  # 'red'|'blue'|'green'|None
-
-    def on_off_color(val): return (0, 200, 0) if val else (160, 160, 160)
-    color_map = {
-        None:  (200, 200, 200),
-        "red": (255, 0, 0),
-        "blue": (0, 0, 255),
-        "green": (0, 200, 0),
-    }
-
-    x0, y0 = 12, 12
-    line_h = font.get_height() + 4
-
-    lines_count = 5  # Box L/F/R + BlockFront + FrontColor
-    bg_w = 240
-    bg_h = line_h * lines_count + 12
-    bg = pygame.Surface((bg_w, bg_h), pygame.SRCALPHA)
-    bg.fill((0, 0, 0, 120))
-    surface.blit(bg, (x0 - 8, y0 - 8))
-
-    out_lines = [
-        (f"Box L: {box_l}",       on_off_color(box_l)),
-        (f"Box F: {box_f}",       on_off_color(box_f)),
-        (f"Box R: {box_r}",       on_off_color(box_r)),
-        (f"Block F: {blk_f}",     on_off_color(blk_f)),
-    ]
-    for i, (text, col) in enumerate(out_lines):
-        surface.blit(font.render(text, True, col), (x0, y0 + i * line_h))
-
-    fc_text = "None" if front_col is None else front_col.capitalize()
-    fc_col  = color_map[front_col]
-    surface.blit(font.render(f"FrontColor: {fc_text}", True, fc_col), (x0, y0 + 4 * line_h))
-
-# ---------- Pygame setup & main loop ----------
-def arrows():
-    pygame.init()
-    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.RESIZABLE)
-    pygame.display.set_caption("Maze Grid 8x8 – Class-based")
-    font = pygame.font.SysFont(None, 20)  # or any size you like
-
-
-    grid = Grid(GRID_SIZE)
-    sx, sy = grid.start
-    robot = Robot(grid, sx, sy)
-
-    BLACK = (0, 0, 0)
-
-    # simple space rising-edge
-    space_prev = False
-
-    running = True
-    width, height = pygame.display.get_surface().get_size()
-    clock = pygame.time.Clock()
-
-    while running:
-        now = pygame.time.get_ticks()
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            elif event.type == pygame.VIDEORESIZE:
-                width, height = event.w, event.h
-
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT]:
-            robot.left(now)
-        elif keys[pygame.K_RIGHT]:
-            robot.right(now)
-        elif keys[pygame.K_UP]:
-            robot.up(now)
-        elif keys[pygame.K_DOWN]:
-            robot.down(now)
-
-        space_now = keys[pygame.K_SPACE]
-        if space_now and not space_prev:
-            robot.pickup()
-        space_prev = space_now
-
-        # draw
-        screen.fill(BLACK)
-        grid.draw(screen, width, height)
-        robot.draw(screen, width, height)
-        draw_diagnostics(screen, robot, width, height, font)  # <-- NEW
-        pygame.display.flip()
-
-
-        clock.tick(60)  # cap FPS
+    def __init__(self, grid_map):
+        self.grid_map = grid_map
+        self.x = 0
+        self.y = 8 # Start Bottom Left
         
+        self.state = "INIT"  
+        self.scan_rows = [7, 4, 1] 
+        self.current_row_idx = 0
+        self.direction = 1 
+        
+        self.move_queue = []
+        
+        self.pixel_x = self.grid_to_pixel(self.x)
+        self.pixel_y = self.grid_to_pixel(self.y)
+        self.speed = 5
+        self.scan_beams = [] 
 
-    pygame.quit()
+    def grid_to_pixel(self, val):
+        return MARGIN + val * CELL_SIZE
 
-# --- helpers ---------------------------------------------------------------
+    def is_valid_pos(self, x, y):
+        return 0 <= x < GRID_SIZE and 0 <= y < GRID_SIZE
 
-DIR_FUNCS = {
-    "right": ("up",   lambda n: n.right()),
-    "left":  ("up",   lambda n: n.left()),
-    "up":    ("right",lambda n: n.up()),
-    "down":  ("right",lambda n: n.down()),
-}
+    def update(self):
+        target_px = self.grid_to_pixel(self.x)
+        target_py = self.grid_to_pixel(self.y)
+        
+        # Movement Animation Logic
+        if self.pixel_x < target_px: self.pixel_x = min(self.pixel_x + self.speed, target_px)
+        elif self.pixel_x > target_px: self.pixel_x = max(self.pixel_x - self.speed, target_px)
+        
+        if self.pixel_y < target_py: self.pixel_y = min(self.pixel_y + self.speed, target_py)
+        elif self.pixel_y > target_py: self.pixel_y = max(self.pixel_y - self.speed, target_py)
 
-ROBOT_MOVE = {
-    "right": lambda r: r.right(),
-    "left":  lambda r: r.left(),
-    "up":    lambda r: r.up(),
-    "down":  lambda r: r.down(),
-}
-history: set[tuple[int, int]] = set()
+        # When animation finishes, Think next move
+        if self.pixel_x == target_px and self.pixel_y == target_py:
+            self.think() 
 
-def _tail_after_two(path: LinkNode) -> LinkNode:
-    """currentPath.next.next or LinkNode('end')"""
-    return path.next.next if (path and path.next and path.next.next) else LinkNode("end")
+    def think(self):
+        # 1. Scan current location
+        self.scan_and_report_local()
 
-# --- path construction & navigation ---------------------------------------
+        # 2. Get Next Move
+        next_pos = self.determine_next_move()
 
-def pathFinder(start: Node, end: Node, concat: LinkNode | None = None,
-               visited: set[tuple[int, int]] | None = None,
-               blocks: list[Node] | None = None):
-    """Adaptive path builder that tries x first, then y if blocked."""
-    if concat is None:
-        concat = LinkNode("end")
-    if visited is None:
-        visited = set()
-    if blocks is None:
-        blocks = []
+        # 3. Apply Move (only if valid)
+        if next_pos:
+            nx, ny = next_pos
+            if self.is_valid_pos(nx, ny):
+                self.x, self.y = nx, ny
+            else:
+                print(f"CRITICAL ERROR: Attempted to move out of bounds to ({nx}, {ny})")
 
-    pos = (start.x, start.y)
-    if pos in visited:
-        # Already visited this node → stop to avoid loop
-        return concat
-    visited.add(pos)
+    def determine_next_move(self):
+        # Priority 1: Execute Queued Moves
+        if len(self.move_queue) > 0:
+            return self.move_queue.pop(0)
 
-    # Reached target
-    if start == end:
-        return concat
+        # Priority 2: State Machine Logic
+        if self.state == "INIT":
+            start_row = self.scan_rows[0]
+            if self.y > start_row: return (self.x, self.y - 1)
+            else: 
+                self.state = "SCANNING"
+        
+        if self.state == "SCANNING":
+            next_x = self.x + self.direction
+            
+            # A. Check Map Boundaries (End of Row)
+            if not self.is_valid_pos(next_x, self.y):
+                self.queue_row_change()
+                if self.move_queue: return self.move_queue.pop(0)
+                else: return None
 
-    dx = end.x - start.x
-    dy = end.y - start.y
+            # B. Check Obstacles
+            if self.grid_map.is_obstacle(next_x, self.y):
+                success = self.calculate_dynamic_bypass(next_x, self.y)
+                if success and self.move_queue:
+                    return self.move_queue.pop(0)
+                else:
+                    return None
+            else:
+                return (next_x, self.y)
+        
+        return None
 
-    # Helper to move and recurse
-    def try_move(direction: str, new_node: Node):
-        if (new_node.x, new_node.y) in visited or new_node in blocks:
-            return None
-        return LinkNode(direction, pathFinder(new_node, end, concat, visited, blocks))
+    def calculate_dynamic_bypass(self, blocked_x, blocked_y):
+        """ Attempts to find a path around an obstacle. """
+        candidate_lanes = []
+        
+        # Option A: UP (y-1)
+        if self.is_valid_pos(self.x, self.y - 1) and not self.grid_map.is_obstacle(self.x, self.y - 1):
+            candidate_lanes.append(self.y - 1)
+        # Option B: DOWN (y+1)
+        if self.is_valid_pos(self.x, self.y + 1) and not self.grid_map.is_obstacle(self.x, self.y + 1):
+            candidate_lanes.append(self.y + 1)
+            
+        if not candidate_lanes: return False 
 
-    # --- Try X direction first ---
-    if dx > 0:
-        attempt = try_move("right", Node(start.x + 1, start.y))
-        if attempt: return attempt
-    elif dx < 0:
-        attempt = try_move("left", Node(start.x - 1, start.y))
-        if attempt: return attempt
+        for bypass_y in candidate_lanes:
+            temp_path = []
+            lane_success = True 
+            re_entry_found = False
+            
+            # Step 1: Move Sideways
+            temp_path.append((self.x, bypass_y))
+            curr_x = self.x
+            
+            # Step 2: Look ahead
+            for i in range(1, GRID_SIZE + 1):
+                next_check_x = self.x + (i * self.direction)
+                
+                # A. Check Edge of Map (SUCCESS CASE)
+                if not self.is_valid_pos(next_check_x, bypass_y):
+                    re_entry_found = True 
+                    break
+                    
+                # B. Check for Obstacles in the Bypass Lane
+                if self.grid_map.is_obstacle(next_check_x, bypass_y):
+                    lane_success = False 
+                    break 
+                
+                temp_path.append((next_check_x, bypass_y))
+                curr_x = next_check_x
+                
+                # C. Check Re-entry to original row
+                if self.is_valid_pos(curr_x, self.y) and not self.grid_map.is_obstacle(curr_x, self.y):
+                    temp_path.append((curr_x, self.y)) 
+                    re_entry_found = True
+                    break
+            
+            if lane_success and re_entry_found:
+                self.move_queue.extend(temp_path)
+                return True
+                
+        return False
 
-    # --- Fallback: Try Y direction ---
-    if dy > 0:
-        attempt = try_move("up", Node(start.x, start.y + 1))
-        if attempt: return attempt
-    elif dy < 0:
-        attempt = try_move("down", Node(start.x, start.y - 1))
-        if attempt: return attempt
+    def scan_and_report_local(self):
+        self.scan_beams = [] 
+        check_list = [(self.x, self.y - 1), (self.x, self.y + 1), (self.x + self.direction, self.y)]
+        
+        for nx, ny in check_list:
+            if self.is_valid_pos(nx, ny):
+                self.add_scan_beam(nx, ny)
+                if self.grid_map.get_target(nx, ny):
+                    rec = f"Target at ({nx},{ny})"
+                    if rec not in self.grid_map.recorded_items: self.grid_map.recorded_items.append(rec)
+                if self.grid_map.is_obstacle(nx, ny):
+                    self.grid_map.known_obstacles.add((nx, ny))
+                    rec = f"Box at ({nx},{ny})"
+                    if rec not in self.grid_map.recorded_items: self.grid_map.recorded_items.append(rec)
 
-    # No move possible
-    return concat
+    def add_scan_beam(self, tx, ty):
+        start = (self.pixel_x, self.pixel_y)
+        end = (self.grid_to_pixel(tx), self.grid_to_pixel(ty))
+        self.scan_beams.append((start, end))
 
-def getPosAfter(start: Node, path: LinkNode, steps: int):
-    """Advance 'steps' along the path, returning the resulting Node position."""
-    cur = start
-    p = path
-    for _ in range(steps):
-        if p is None or p.value == "end":
-            break
-        match p.value:
-            case "right": cur = cur.right()
-            case "left":  cur = cur.left()
-            case "up":    cur = cur.up()
-            case "down":  cur = cur.down()
-        p = p.next
-    return cur
+    def queue_row_change(self):
+        self.current_row_idx += 1
+        if self.current_row_idx >= len(self.scan_rows):
+            self.state = "FINISHED"
+            return
+        target_row = self.scan_rows[self.current_row_idx]
+        temp_y = self.y 
+        step = -1 if target_row < self.y else 1
+        while temp_y != target_row:
+            temp_y += step
+            self.move_queue.append((self.x, temp_y))
+        self.direction *= -1 
 
-def redirect(start: Node, currentPath: LinkNode, blocks: list[Node] | None = None):
-    """
-    If the next move is blocked, return a new detour path:
-      right/left -> detour starts with 'up'
-      up/down    -> detour starts with 'right'
-    Otherwise return currentPath unchanged.
-    """
-    global history
+    def draw(self, surface):
+        pygame.draw.circle(surface, COLOR_ROBOT, (int(self.pixel_x), int(self.pixel_y)), 15)
+        end_pos = (self.pixel_x + (20 * self.direction), self.pixel_y)
+        pygame.draw.line(surface, (0,0,0), (self.pixel_x, self.pixel_y), end_pos, 3)
+        for start, end in self.scan_beams:
+            pygame.draw.line(surface, COLOR_SCAN_LINE, start, end, 2)
 
-    if blocks is None or currentPath is None or currentPath.value == "end":
-        return currentPath
+# --- Main ---
 
-    dir_name = currentPath.value
-    if dir_name not in DIR_FUNCS:
-        return currentPath
-
-    detour_head, neighbor_fn = DIR_FUNCS[dir_name]
-    neighbor = neighbor_fn(start)
-
-    pos_dir = (start.x, start.y, dir_name)
-    if pos_dir in history:
-        print("⚠️ Repeated detour pattern:", pos_dir)
-        return _tail_after_two(currentPath)
-    history.add(pos_dir)
-
-    if neighbor in blocks:
-        # Determine detour start
-        detour_start = (
-            start.up() if detour_head == "up"
-            else start.right() if detour_head == "right"
-            else None
-        )
-        new_end = getPosAfter(start, currentPath, 2)
-        tail = _tail_after_two(currentPath)
-
-        # 🧩 Here's where integration happens:
-        new_path = pathFinder(
-            detour_start,
-            new_end,
-            tail,
-            visited={(x, y) for x, y, _ in history},  # from your global history
-            blocks=blocks
-        )
-        return LinkNode(detour_head, new_path)
-
-    return currentPath
-
-
-def move(robot: Robot, path: LinkNode):
-    """Execute one step of the given path (no checks)."""
-    if path and path.value in ROBOT_MOVE:
-        ROBOT_MOVE[path.value](robot)
-
-# --- runtime ---------------------------------------------------------------
-blocks: list[Node] = []
-
-def moveOnPath(robot: Robot, path: LinkNode, oldPos: Node):
-    """
-    Take one step along 'path' (with block detection + redirection).
-    Returns the (possibly new) path head to follow next frame.
-    """
-    if path is None or path.value == "end":
-        return path
-
-    cur = Node(robot.x, robot.y)
-
-    def _maybe_redirect(mark_node: Node):
-        blocks.append(mark_node)
-        print("blocks : ", blocks)
-        newp = redirect(cur, path, blocks)
-        newp.print()
-        move(robot, newp)   # execute the redirected first step immediately
-        return newp
-
-    # Decide + act for this step
-    v = path.value
-    if v == "right":
-        if robot.detect_block(): path = _maybe_redirect(cur.right())
-        else: robot.right()
-    elif v == "left":
-        if robot.detect_block(): path = _maybe_redirect(cur.left())
-        else: robot.left()
-    elif v == "up":
-        if robot.detect_block(): path = _maybe_redirect(cur.up())
-        else: robot.up()
-    elif v == "down":
-        if robot.detect_block(): path = _maybe_redirect(cur.down())
-        else: robot.down()
-
-    # Advance path pointer only if we actually moved
-    newPos = Node(robot.x, robot.y)
-    if newPos != oldPos:
-        print("Moved:", path.value)
-        path = path.next
-
-    return path
-
-def NodeToCord(nodes:list[Node])->list:
-    li = []
-    for node in nodes:
-        li.append(f"({node.x}, {node.y})")
-
-    return li
-
-# --- example main loop (unchanged behavior, just tidier shell) ------------
 def main():
     pygame.init()
-    screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT), pygame.RESIZABLE)
-    pygame.display.set_caption("Maze Grid 8x8 – Class-based")
-    font = pygame.font.SysFont(None, 20)
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("Robot Simulation - 6 Boxes No Edge")
     clock = pygame.time.Clock()
+    font = pygame.font.SysFont("Consolas", 14)
+    btn_font = pygame.font.SysFont("Arial", 18, bold=True)
 
-    # scene
-    objects = {"obstables": [(2,7), (3,6)], "green": (1,1)}
-    grid = Grid(GRID_SIZE)
-    sx, sy = grid.start
-    robot = Robot(grid, sx, sy)
+    grid_map = GridMap()
+    robot = Robot(grid_map)
+    btn_rect = pygame.Rect(430, 580, 140, 40)
 
-    BLACK = (0, 0, 0)
     running = True
-
-    # original chained path (kept same semantics, just wrapped for readability)
-    path = LinkNode("up",
-            pathFinder(Node(0,1), Node(7,1),
-            LinkNode("up",
-            LinkNode("up",
-            pathFinder(Node(7,3), Node(1,3),
-            LinkNode("up",
-            LinkNode("up",
-            pathFinder(Node(1,5), Node(7,5),
-            LinkNode("up",
-            LinkNode("up",
-            pathFinder(Node(7,7), Node(1,7))))))))))))
-
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
-            elif event.type == pygame.VIDEORESIZE:
-                width, height = event.w, event.h
+            
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if btn_rect.collidepoint(event.pos):
+                    grid_map = GridMap()
+                    robot = Robot(grid_map)
 
-        oldPos = Node(robot.x, robot.y)
-        newPath = moveOnPath(robot, path, oldPos)
-        if newPath is not None:
-            path = newPath
+        robot.update()
+        screen.fill(COLOR_BG)
+        
+        # Draw Grid
+        for i in range(GRID_SIZE):
+            p = MARGIN + i * CELL_SIZE
+            pygame.draw.line(screen, COLOR_GRID, (p, MARGIN), (p, MARGIN + (GRID_SIZE - 1) * CELL_SIZE), 2)
+            pygame.draw.line(screen, COLOR_GRID, (MARGIN, p), (MARGIN + (GRID_SIZE - 1) * CELL_SIZE, p), 2)
 
-        # draw
-        screen.fill(BLACK)
-        grid.draw(screen, *pygame.display.get_surface().get_size())
-        robot.draw(screen, *pygame.display.get_surface().get_size())
-        draw_diagnostics(screen, robot, *pygame.display.get_surface().get_size(), font)
+        # Draw Objects
+        for (ox, oy), _ in grid_map.obstacles.items():
+            cx, cy = MARGIN + ox * CELL_SIZE, MARGIN + oy * CELL_SIZE
+            pygame.draw.rect(screen, COLOR_OBS, (cx - 12, cy - 12, 24, 24))
+
+        for (kx, ky) in grid_map.known_obstacles:
+            cx, cy = MARGIN + kx * CELL_SIZE, MARGIN + ky * CELL_SIZE
+            pygame.draw.rect(screen, (255, 0, 0), (cx - 15, cy - 15, 30, 30), 2)
+
+        for (tx, ty), color in grid_map.targets.items():
+            cx, cy = MARGIN + tx * CELL_SIZE, MARGIN + ty * CELL_SIZE
+            pygame.draw.rect(screen, color, (cx - 10, cy - 10, 20, 20))
+
+        robot.draw(screen)
+
+        # UI
+        y_ui = SCREEN_HEIGHT - 100
+        pygame.draw.rect(screen, (30,30,30), (0, y_ui, SCREEN_WIDTH, 100))
+        txt_state = font.render(f"Pos: ({robot.x}, {robot.y}) | State: {robot.state}", True, (255, 255, 255))
+        screen.blit(txt_state, (20, y_ui + 10))
+        
+        pygame.draw.rect(screen, COLOR_BUTTON, btn_rect, border_radius=5)
+        btn_txt = btn_font.render("Random Map", True, (255, 255, 255))
+        txt_rect = btn_txt.get_rect(center=btn_rect.center)
+        screen.blit(btn_txt, txt_rect)
+
         pygame.display.flip()
-        clock.tick(60)
-        print(NodeToCord(blocks))
+        clock.tick(30) 
 
     pygame.quit()
 
-
 if __name__ == "__main__":
-    # arrows()
     main()
