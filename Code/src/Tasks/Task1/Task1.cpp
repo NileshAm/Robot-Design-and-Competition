@@ -236,8 +236,8 @@ namespace Task1
             while (x < 7)
             {
                 if (robot.isInterrupted()) return;
-                robot.oled.displayText("X:" + String(x) + " Y:" + String(y), 0, 0, 1);
-                robot.oled.display();
+                // robot.oled.displayText("X:" + String(x) + " Y:" + String(y), 0, 0, 1);
+                // robot.oled.display();
                 robot.followLine();
                 if (robot.junction.isTurn())
                 {

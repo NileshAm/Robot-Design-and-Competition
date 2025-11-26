@@ -137,6 +137,7 @@ void Robot::setInterruptButton(pushbutton& btn) {
 
 bool Robot::isInterrupted() {
     if (_interruptButton && _interruptButton->stateChanged() == 1) {
+        Serial.println("Interrupt Button Pressed");
         stop();
         return true;
     }

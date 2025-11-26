@@ -70,10 +70,22 @@ void setup()
     btnUp.init();
     btnDown.init();
     btnSelect.init();
+    Serial.println("button init done");
 
     // ---- Menu System ----
     MenuSystem menu(oled, btnUp, btnDown, btnSelect, grabberSensor, robot);
     menu.begin();
+
+    // ---- Auto-Start Task 1 ----
+    oled.clear();
+    oled.display();
+    Task1::run(robot); // Runs until interrupted
+    Serial.println("task1 running");
+    Serial.println("Exiting Task1");
+
+    // ---- Show Menu After Interrupt ----
+    menu.begin(); // Re-draw menu
+    Serial.println("Entering Menu Loop");
 
     // ---- Main Loop ----
     while (true)

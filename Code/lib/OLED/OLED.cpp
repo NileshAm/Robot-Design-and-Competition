@@ -4,11 +4,20 @@ OLED::OLED(uint8_t width, uint8_t height, int8_t reset_pin)
     : _oled(width, height, &Wire, reset_pin), _width(width), _height(height), _resetPin(reset_pin) {}
 
 bool OLED::begin() {
-    if (!_oled.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Try 0x3C
-        if (!_oled.begin(SSD1306_SWITCHCAPVCC, 0x3D)) { // Try 0x3D
+    Serial.println("DEBUG: Attempting to start OLED..."); // Add this
+
+    // 1. Try Address 0x3C
+    if (!_oled.begin(SSD1306_SWITCHCAPVCC, 0x3C)) {
+        Serial.println("DEBUG: 0x3C failed, trying 0x3D..."); // Add this
+        
+        // 2. Try Address 0x3D
+        if (!_oled.begin(SSD1306_SWITCHCAPVCC, 0x3D)) { 
+            Serial.println("DEBUG: OLED failed completely."); // Add this
             return false;
         }
     }
+    
+    Serial.println("DEBUG: OLED Started Successfully!"); // Add this
     _oled.clearDisplay();
     _oled.display();
     return true;
