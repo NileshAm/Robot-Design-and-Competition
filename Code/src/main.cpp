@@ -27,20 +27,27 @@ void setup()
     IRArray ir(8, PINS, W, 0.5f);
     ir.init();
     
-    Tof frontTof(7, 0x29, 20, 21); // xshut, address, sda, scl
+    Tof frontTof(7, 0x2A, 20, 21); // xshut, address, sda, scl
     Tof leftTof(8, 0x30, 20, 21); // xshut, address, sda, scl
     Tof grabberTof(9, 0x31, 20, 21); // xshut, address, sda, scl
     Tof frontTopTof(10, 0x32, 20, 21); // xshut, address, sda, scl
     
-    // frontTof.disable();
-    // leftTof.disable();
-    // grabberTof.disable();
-    // frontTopTof.disable();
-    
-    // frontTof.init(10);
-    // leftTof.init(10);
-    // grabberTof.init(10);
-    // frontTopTof.init(10);
+    frontTof.disable();
+    leftTof.disable();
+    grabberTof.disable();
+    frontTopTof.disable();
+    delay(500); // Wait for reset
+
+    // Initialize sequentially
+    Serial.println("Init frontTof...");
+    frontTof.init(10);
+    Serial.println("Init leftTof...");
+    leftTof.init(10);
+    Serial.println("Init grabberTof...");
+    grabberTof.init(10);
+    Serial.println("Init frontTopTof...");
+    frontTopTof.init(10);
+    Serial.println("All ToF initialized");
     
     ColorSensor grabberSensor(11,12, 13, 14, 15);
     ColorSensor boxColorSensor(16, 17, 18, 19, 20);

@@ -8,7 +8,7 @@ Tof::Tof(uint8_t xshut, int address, uint8_t sda, uint8_t scl)
     _scl = scl;
 
     pinMode(_xshut, OUTPUT);
-    Adafruit_VL6180X _sensor = Adafruit_VL6180X();
+    _sensor = Adafruit_VL6180X();
     
 };
 
