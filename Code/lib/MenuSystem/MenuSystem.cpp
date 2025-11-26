@@ -12,173 +12,139 @@ MenuSystem::MenuSystem(OLED &oled,
       _btnDown(btnDown),
       _btnSelect(btnSelect),
       _sensor(sensor),
-      _robot(robot) {}         // <-- assign robot
+      _robot(robot)
+{
+}
 
 void MenuSystem::begin() {
     drawMenu();
 }
 
-void MenuSystem::update() {
-    // Navigate Up
-    if (_btnUp.stateChanged()) {
-        currentIndex--;
-        if (currentIndex < 0) currentIndex = menuCount - 1;
-        drawMenu();
-    }
+// -------------------------------
+// Update page according to scroll
+// -------------------------------
+void MenuSystem::updatePage() {
+    if (currentIndex < pageStart)
+        pageStart = currentIndex;
 
-    // Navigate Down
-    if (_btnDown.stateChanged()) {
-        currentIndex++;
-        if (currentIndex >= menuCount) currentIndex = 0;
-        drawMenu();
-    }
-
-    // Select button
-    if (_btnSelect.stateChanged()) {
-        _oled.begin();
-        _oled.clear();
-
-        if (currentIndex == 0) { 
-            // ===== Option 1: Color Calibration =====
-            runCalibration();
-            drawMenu();
-        } 
-        
-        else if (currentIndex == 1) { 
-            // ===== Option 2: RUN TASK 1 =====
-            _oled.clear();
-            _oled.displayCenteredText("Running Task 1...", 1);
-            _oled.display();
-            delay(1000);
-
-            Task1::run(_robot);  // <<--- CALL TASK 1 HERE
-
-            _oled.clear();
-            _oled.displayCenteredText("Task 1 Done", 1);
-            _oled.display();
-            delay(2000);
-
-            drawMenu();
-        } 
-
-            else if (currentIndex == 2) { 
-            // ===== Option 3: RUN TASK 2 =====
-            _oled.clear();
-            _oled.displayCenteredText("Running Task 2...", 1);
-            _oled.display();
-            delay(1000);
-
-            //Task2::run(_robot);  // <<--- CALL TASK 1 HERE
-
-            _oled.clear();
-            _oled.displayCenteredText("Task 2 Done", 1);
-            _oled.display();
-            delay(2000);
-
-            drawMenu();
-        } 
-
-            else if (currentIndex == 3) { 
-            // ===== Option 4: RUN TASK 3 =====
-            _oled.clear();
-            _oled.displayCenteredText("Running Task 3...", 1);
-            _oled.display();
-            delay(1000);
-
-            //Task3::run(_robot);  // <<--- CALL TASK 1 HERE
-
-            _oled.clear();
-            _oled.displayCenteredText("Task 3 Done", 1);
-            _oled.display();
-            delay(2000);
-
-            drawMenu();
-        } 
-
-                else if (currentIndex == 4) { 
-            // ===== Option 5: RUN TASK 4 =====
-            _oled.clear();
-            _oled.displayCenteredText("Running Task 4...", 1);
-            _oled.display();
-            delay(1000);
-
-            //Task4::run(_robot);  // <<--- CALL TASK 1 HERE
-
-            _oled.clear();
-            _oled.displayCenteredText("Task 1 Done", 1);
-            _oled.display();
-            delay(2000);
-
-            drawMenu();
-        } 
-
-            else if (currentIndex == 5) { 
-            // ===== Option 6: RUN TASK 5 =====
-            _oled.clear();
-            _oled.displayCenteredText("Running Task 1...", 1);
-            _oled.display();
-            delay(1000);
-
-            //Task5::run(_robot);  // <<--- CALL TASK 1 HERE
-
-            _oled.clear();
-            _oled.displayCenteredText("Task 1 Done", 1);
-            _oled.display();
-            delay(2000);
-
-            drawMenu();
-        } 
-
-            else if (currentIndex == 6) { 
-            // ===== Option 7: RUN TASK 6 =====
-            _oled.clear();
-            _oled.displayCenteredText("Running Task 6...", 1);
-            _oled.display();
-            delay(1000);
-
-            //Task1::run(_robot);  // <<--- CALL TASK 1 HERE
-
-            _oled.clear();
-            _oled.displayCenteredText("Task 1 Done", 1);
-            _oled.display();
-            delay(2000);
-
-            drawMenu();
-        } 
-        
-        else if (currentIndex == 2) { 
-            // ===== Option 3: Run All =====
-            _oled.displayCenteredText("Run All Selected", 1);
-            _oled.display();
-            delay(2000);
-            drawMenu();
-        }
-    }
+    else if (currentIndex >= pageStart + itemsPerPage)
+        pageStart = currentIndex - (itemsPerPage - 1);
 }
 
+// -------------------------------
+// Draw 3 items starting at pageStart
+// -------------------------------
 void MenuSystem::drawMenu() {
     _oled.clear();
-    for (int i = 0; i < menuCount; i++) {
-        String text = (i == currentIndex ? "> " : "  ") + menuItems[i];
-        _oled.displayText(text, 0, i * 10, 1);
+
+    for (int i = 0; i < itemsPerPage; i++) {
+        int itemIndex = pageStart + i;
+        if (itemIndex >= menuCount) break;
+
+        if (itemIndex == currentIndex)
+            _oled.displayText("> " + menuItems[itemIndex], i);
+        else
+            _oled.displayText("  " + menuItems[itemIndex], i);
     }
+
     _oled.display();
 }
 
+// -------------------------------
+// Allow running a task
+// -------------------------------
+void MenuSystem::runTask(const String &name, void (*fn)(Robot&)) {
+    _oled.clear();
+    _oled.displayCenteredText("Running " + name, 1);
+    _oled.display();
+    delay(800);
+
+    if (fn != nullptr)
+        fn(_robot);
+
+    _oled.clear();
+    _oled.displayCenteredText(name + " Done", 1);
+    _oled.display();
+    delay(1500);
+}
+
+// -------------------------------
+// Calibration handler
+// -------------------------------
 void MenuSystem::runCalibration() {
     _oled.clear();
-    _oled.displayText("White", 0, 0, 1);
+    _oled.displayCenteredText("Calibrating...", 1);
     _oled.display();
-    delay(3000);
+
+    //_sensor.calibrate();
+
+    delay(800);
 
     _oled.clear();
-    _oled.displayText("Black", 0, 0, 1);
+    _oled.displayCenteredText("Calibration OK", 1);
     _oled.display();
-    delay(3000);
+    delay(1500);
+}
 
-    _oled.clear();
-    _oled.displayText("Done", 0, 0, 1);
-    _oled.display();
-    Serial.println("Calibration complete!");
-    delay(2000);
+// -------------------------------
+// Main update loop
+// -------------------------------
+void MenuSystem::update() {
+
+    // ---- UP BUTTON (falling edge) ----
+    if (_btnUp.stateChanged() == 1) {
+        currentIndex--;
+        if (currentIndex < 0) currentIndex = menuCount - 1;
+        updatePage();
+        drawMenu();
+    }
+
+    // ---- DOWN BUTTON (falling edge) ----
+    if (_btnDown.stateChanged() == 1) {
+        currentIndex++;
+        if (currentIndex >= menuCount) currentIndex = 0;
+        updatePage();
+        drawMenu();
+    }
+
+    // ---- SELECT BUTTON (falling edge) ----
+    if (_btnSelect.stateChanged() == 1) {
+
+        switch (currentIndex) {
+
+        case 0:
+            runCalibration();
+            break;
+
+        case 1:
+            runTask("Task 1", Task1::run);
+            break;
+
+        case 2:
+            runTask("Task 2", nullptr /* Task2::run */);
+            break;
+
+        case 3:
+            runTask("Task 3", nullptr);
+            break;
+
+        case 4:
+            runTask("Task 4", nullptr);
+            break;
+
+        case 5:
+            runTask("Task 5", nullptr);
+            break;
+
+        case 6:
+            runTask("Task 6", nullptr);
+            break;
+
+        case 7:
+            runTask("All Tasks", nullptr);
+            break;
+        }
+
+        drawMenu();
+    }
 }

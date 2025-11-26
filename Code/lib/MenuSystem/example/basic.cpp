@@ -1,50 +1,90 @@
 #include <Arduino.h>
+
 #include "OLED.h"
 #include "pushbutton.h"
 #include "ColorSensor.h"
-#include "MenuSystem.h"
+#include "Tof.h"
+#include "Motor.h"
+#include "IRArray.h"
 #include "Robot.h"
+#include "MenuSystem.h"
 
-// OLED
+// ------------------------------
+// BUTTON PINS
+// ------------------------------
+#define BTN_UP     2
+#define BTN_DOWN   3
+#define BTN_SELECT 4
+
+// ------------------------------
+// HARDWARE OBJECTS
+// ------------------------------
 OLED oled;
 
-// Buttons
-pushbutton btnUp(2);
-pushbutton btnDown(3);
-pushbutton btnSelect(4);
+pushbutton btnUp(BTN_UP);
+pushbutton btnDown(BTN_DOWN);
+pushbutton btnSelect(BTN_SELECT);
 
-// Color sensor
-ColorSensor sensor(4, 5, 6, 7, 8);
+// Color sensors
+ColorSensor grabberSensor;
+ColorSensor boxColorSensor;
 
-Robot robot;
+// Motors
+Motor motorR(7, 8, 9,  2, 4, 600);
+Motor motorL(7, 8, 9,  2, 4, 600);
 
-// Menu system
-MenuSystem menu(oled, btnUp, btnDown, btnSelect, sensor, robot);
+// IR Array
+IRArray irArr;
+
+// TOF Sensors
+Tof frontTof;
+Tof leftTof;
+Tof frontTopTof;
+Tof grabberTof;
+
+// ------------------------------
+// ROBOT WITH *YOUR* CONSTRUCTOR
+// ------------------------------
+Robot robot(motorR,motorL,irArr,frontTof,leftTof,frontTopTof,grabberTof,grabberSensor,boxColorSensor,oled
+);
+
+// ------------------------------
+// MENU
+// ------------------------------
+MenuSystem *menu;
 
 
+// ------------------------------
 void setup() {
-    Serial.begin(9600);
+    Serial.begin(115200);
 
-    // Initialize buttons
+    oled.begin();
+    oled.clear();
+    oled.displayCenteredText("Booting...", 2);
+    delay(500);
+
     btnUp.init();
     btnDown.init();
     btnSelect.init();
 
-    // Initialize OLED
-    if (!oled.begin()) {
-        Serial.println("OLED init failed!");
-        while (1);
-    }
+    grabberSensor.begin();
+    boxColorSensor.begin();
 
-    // Initialize sensor
-    sensor.begin();
-    Serial.println("sensor begin done");
-    // Display menu
-    menu.begin();
-    Serial.println("menu begin done");
+    irArr.init();
+
+    frontTof.init();
+    leftTof.init();
+    frontTopTof.init();
+    grabberTof.init();
+
+    motorR.init();
+    motorL.init();
+
+    menu = new MenuSystem(oled, btnUp, btnDown, btnSelect, grabberSensor, robot);
+    menu->begin();
 }
 
+// ------------------------------
 void loop() {
-    menu.update();
-    delay(100); // debounce
+    menu->update();
 }
