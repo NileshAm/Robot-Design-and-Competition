@@ -43,9 +43,9 @@ void MenuSystem::drawMenu() {
         if (itemIndex >= menuCount) break;
 
         if (itemIndex == currentIndex)
-            _oled.displayText("> " + menuItems[itemIndex], i);
+            _oled.displayText("> " + menuItems[itemIndex], 0, i * 12);
         else
-            _oled.displayText("  " + menuItems[itemIndex], i);
+            _oled.displayText("  " + menuItems[itemIndex], 0, i * 12);
     }
 
     _oled.display();

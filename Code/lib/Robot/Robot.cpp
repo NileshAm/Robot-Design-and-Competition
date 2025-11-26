@@ -142,4 +142,3 @@ bool Robot::isInterrupted() {
     }
     return false;
 }
-```

@@ -4,8 +4,10 @@ OLED::OLED(uint8_t width, uint8_t height, int8_t reset_pin)
     : _oled(width, height, &Wire, reset_pin), _width(width), _height(height), _resetPin(reset_pin) {}
 
 bool OLED::begin() {
-    if (!_oled.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Default I2C addr = 0x3C
-        return false;
+    if (!_oled.begin(SSD1306_SWITCHCAPVCC, 0x3C)) { // Try 0x3C
+        if (!_oled.begin(SSD1306_SWITCHCAPVCC, 0x3D)) { // Try 0x3D
+            return false;
+        }
     }
     _oled.clearDisplay();
     _oled.display();

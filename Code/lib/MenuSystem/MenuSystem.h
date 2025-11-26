@@ -5,7 +5,7 @@
 #include "ColorSensor.h"
 #include "Robot.h"
 
-#include "../src/Tasks/Task1/Task1.h"
+#include "../../src/Tasks/Task1/Task1.h"
 // #include "../src/Tasks/Task2/Task2.h"
 // #include "../src/Tasks/Task3/Task3.h"
 // #include "../src/Tasks/Task4/Task4.h"
@@ -33,7 +33,7 @@ private:
     Robot &_robot;
 
     // Visible menu lines per page on OLED
-    static const int itemsPerPage = 3;
+    static const int itemsPerPage = 5;
 
     // Menu items
     static const int menuCount = 8;

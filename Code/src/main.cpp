@@ -6,6 +6,8 @@
 #include <ColorSensor.h>
 #include <Robot.h>
 #include <Utils.h>
+#include <pushbutton.h>
+#include <MenuSystem.h>
 
 
 
@@ -30,15 +32,15 @@ void setup()
     Tof grabberTof(9, 0x31, 20, 21); // xshut, address, sda, scl
     Tof frontTopTof(10, 0x32, 20, 21); // xshut, address, sda, scl
     
-    frontTof.disable();
-    leftTof.disable();
-    grabberTof.disable();
-    frontTopTof.disable();
+    // frontTof.disable();
+    // leftTof.disable();
+    // grabberTof.disable();
+    // frontTopTof.disable();
     
-    frontTof.init(10);
-    leftTof.init(10);
-    grabberTof.init(10);
-    frontTopTof.init(10);
+    // frontTof.init(10);
+    // leftTof.init(10);
+    // grabberTof.init(10);
+    // frontTopTof.init(10);
     
     ColorSensor grabberSensor(11,12, 13, 14, 15);
     ColorSensor boxColorSensor(16, 17, 18, 19, 20);
@@ -52,66 +54,43 @@ void setup()
     Robot robot(leftMotor, rightMotor, ir , frontTof , leftTof , frontTopTof , grabberTof , grabberSensor , boxColorSensor , oled);
 
     // ---- collect min/max while you sweep over line/background ----
-    for (int i=0; i<200; ++i) {   // ~200 samples; adjust as needed
-        ir.updateSensors();         // calls readRaw() & updates min/max
-        delay(5);                   // small gap between samples
-    }
-    ir.calibrate();               // compute scale/offset from min/max
+    // for (int i=0; i<200; ++i) {   // ~200 samples; adjust as needed
+    //     ir.updateSensors();         // calls readRaw() & updates min/max
+    //     delay(5);                   // small gap between samples
+    // }
+    // ir.calibrate();               // compute scale/offset from min/max
 
+
+    // ---- Buttons ----
+    // TODO: Verify these pin numbers!
+    pushbutton btnUp(40);
+    pushbutton btnDown(41);
+    pushbutton btnSelect(42);
+
+    btnUp.init();
+    btnDown.init();
+    btnSelect.init();
+
+    // ---- Menu System ----
+    MenuSystem menu(oled, btnUp, btnDown, btnSelect, grabberSensor, robot);
+    menu.begin();
+
+    // ---- Main Loop ----
     while (true)
     {
-        int raw[8];
-        double    norm[8];
-        bool     dig[8];
-
-        ir.readRaw(raw);
-        ir.readNormalized(norm);  // internally calls readRaw()
-        ir.digitalRead(dig);      // internally calls readNormalized()
-
-
-        // printArray(raw, 8, ", ");
-        // Serial.println();
-        // printArray(norm, 8, ", ");
-        // Serial.println();
-        printArray(dig, 8, ", ");
-        // Serial.println(robot.ir.weightedSum()-350);
-        // Serial.println();
-
-        // delay(100);
-        // leftMotor.setSpeed(50);
-        // rightMotor.setSpeed(50);
-
-        // Serial.print(robot.MotorL.getTicks());      // delay(2000);
-        // Serial.print("\t");                         // delay(2000);
-        // Serial.println(robot.MotorR.getTicks());      // delay(2000);
-        // leftMotor.setSpeed(0);
-        // rightMotor.setSpeed(0);
-        // delay(2000);
-        // leftMotor.setSpeed(-50);
-        // rightMotor.setSpeed(-50);
-        // delay(2000);
-        // leftMotor.setSpeed(0);
-        // rightMotor.setSpeed(0);
-        // delay(2000);
-        // leftMotor.setSpeed(50);
-        // rightMotor.setSpeed(-50);
-        // delay(2000);
-        // leftMotor.setSpeed(0);
-        // rightMotor.setSpeed(0);
-        // delay(2000);
-        // leftMotor.setSpeed(-50);
-        // rightMotor.setSpeed(50);
-        // delay(2000);
-        // leftMotor.setSpeed(0);
-        // rightMotor.setSpeed(0);
-        // delay(2000);
+        menu.update();
+        
+        // Optional: Keep sensor debug prints if needed, but they might slow down the menu
+        // int raw[8];
+        // ir.readRaw(raw);
+        // ...
     }
-    
-
-    
 }
 
 void loop()
 {
-    
+    // Empty because we have a while(true) in setup, 
+    // but typically we should move the while(true) content here.
+    // For now, keeping it in setup to match existing style, 
+    // but the while(true) above handles the loop.
 }
