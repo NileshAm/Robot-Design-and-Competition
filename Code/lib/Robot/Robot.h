@@ -58,7 +58,11 @@ class Robot {
 
         void calibrateIR();
 
+        void setInterruptButton(pushbutton& btn);
+        bool isInterrupted();
+
     private:
+        pushbutton* _interruptButton = nullptr;
         float _speed = 40;
         PID _straightLinePID;
         PID _lineFollowerPID;

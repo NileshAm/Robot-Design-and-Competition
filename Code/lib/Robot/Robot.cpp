@@ -130,3 +130,16 @@ void Robot::calibrateIR(){
     }
     ir.calibrate();
 }
+
+void Robot::setInterruptButton(pushbutton& btn) {
+    _interruptButton = &btn;
+}
+
+bool Robot::isInterrupted() {
+    if (_interruptButton && _interruptButton->stateChanged() == 1) {
+        stop();
+        return true;
+    }
+    return false;
+}
+```

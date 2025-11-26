@@ -30,6 +30,7 @@ namespace Task1
     {
         while (robot.junction.isTurn() && y == 1)
         {
+            if (robot.isInterrupted()) return;
             if (robot.junction.isTurn())
             {
                 y += 1;
@@ -59,8 +60,10 @@ namespace Task1
 
         while (deltaX != 0 || deltaY != 0)
         {
+            if (robot.isInterrupted()) return;
             while (deltaX != 0)
             {
+                if (robot.isInterrupted()) return;
                 robot.followLine();
                 if (robot.junction.isTurn())
                 {
@@ -71,6 +74,7 @@ namespace Task1
                     robot.turn(90 * stepY);
                     while (robot.junction.isTurn())
                     {
+                        if (robot.isInterrupted()) return;
                         robot.followLine();
                     }
                     deltaY += stepY;
@@ -80,6 +84,7 @@ namespace Task1
             robot.turn(90 * stepY);
             while (deltaY != 0)
             {
+                if (robot.isInterrupted()) return;
                 robot.followLine();
                 if (robot.junction.isTurn())
                 {
@@ -90,6 +95,7 @@ namespace Task1
                     robot.turn(90 * stepX);
                     while (robot.junction.isTurn())
                     {
+                        if (robot.isInterrupted()) return;
                         robot.followLine();
                     }
                     deltaX += stepX;
@@ -141,18 +147,18 @@ namespace Task1
      *  - If an uncolored box is detected, call _addBox; if colored, update the corresponding colored Box.
      *  - Pickup and return the box to the correct colored square (TODO).
      */
-    void _detectBox(Robot &robot, int8_t xDir, int8_t directon)
+    void _detectBox(Robot &robot, int8_t xDir, int8_t direction)
     {
-        if (directon != 0)
+        if (direction != 0)
         {
-            robot.turn(-90 * xDir * directon);
+            robot.turn(-90 * xDir * direction);
         }
         if (robot.frontTof.readRange() < robot.frontTopTof.readRange())
         {
-            if (directon != 0)
+            if (direction != 0)
             {
-                _addBox(x, y + xDir * directon);
-                robot.turn(90 * xDir * directon);
+                _addBox(x, y + xDir * direction);
+                robot.turn(90 * xDir * direction);
                 robot.MotorR.goTillCM(5, 40);
                 robot.MotorL.goTillCM(5, 40);
             }
@@ -166,15 +172,16 @@ namespace Task1
         {
             while (robot.frontTof.readRange() < 5) // TODO: tune the value to accurtely detect front box
             {
+                if (robot.isInterrupted()) return;
                 robot.followLine();
             }
             int8_t tempX = 0;
             int8_t tempY = 0;
             // FIX: test the code for functionality
-            if (directon != 0)
+            if (direction != 0)
             {
                 tempX = x;
-                tempY = y + xDir * directon;
+                tempY = y + xDir * direction;
             }
             else
             {
@@ -205,6 +212,7 @@ namespace Task1
             robot.turn(180);
             while (robot.junction.isTurn())
             {
+                if (robot.isInterrupted()) return;
                 robot.followLine();
             }
             // returning the box to the correct colored square and coming back to the initial position
@@ -217,6 +225,7 @@ namespace Task1
 
         while (robot.junction.isTurn())
         {
+            if (robot.isInterrupted()) return;
             robot.followLine();
         }
         robot.turn90();
@@ -226,6 +235,7 @@ namespace Task1
         {
             while (x < 7)
             {
+                if (robot.isInterrupted()) return;
                 robot.oled.displayText("X:" + String(x) + " Y:" + String(y), 0, 0, 1);
                 robot.oled.display();
                 robot.followLine();

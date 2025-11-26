@@ -17,6 +17,7 @@ MenuSystem::MenuSystem(OLED &oled,
 }
 
 void MenuSystem::begin() {
+    _robot.setInterruptButton(_btnSelect);
     drawMenu();
 }
 
