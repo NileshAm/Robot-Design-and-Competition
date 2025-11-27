@@ -30,6 +30,8 @@ void Tof::init(int offset)
     if(!_sensor.begin()){
         Serial.println("Tof failed to initialize");
         while (1);
+    }else{
+        Serial.println("Tof initialization complete");
     }
     _sensor.setAddress(_address);
     delay(10);

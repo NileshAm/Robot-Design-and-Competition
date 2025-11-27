@@ -15,9 +15,9 @@
 void setup()
 {
     Serial.begin(9600);
-
-    Motor leftMotor(38, 36, 4, 2, 30, 600);     // dir1, dir2, pwm, encA, encB, ticks/rev
-    Motor rightMotor(22, 28, 5, 3, 24, 600); // dir1, dir2, pwm, encA, encB, ticks/rev
+    
+    Motor leftMotor(42, 44, 4, 2, 46, 600);     // dir1, dir2, pwm, encA, encB, ticks/rev
+    Motor rightMotor(38, 36, 5, 3, 40, 600); // dir1, dir2, pwm, encA, encB, ticks/rev
     leftMotor.init();
     rightMotor.init();
     
@@ -27,23 +27,22 @@ void setup()
     IRArray ir(8, PINS, W, 0.5f);
     ir.init();
     
-    Tof frontTof(7, 0x2A, 20, 21); // xshut, address, sda, scl
-    Tof leftTof(8, 0x30, 20, 21); // xshut, address, sda, scl
-    Tof grabberTof(9, 0x31, 20, 21); // xshut, address, sda, scl
-    Tof frontTopTof(10, 0x32, 20, 21); // xshut, address, sda, scl
+    Tof frontTof(24, 0x30, 20, 21); // xshut, address, sda, scl
+    Tof leftTof(26, 0x31, 20, 21); // xshut, address, sda, scl
+    Tof leftTof2(28, 0x34, 20, 21); // xshut, address, sda, scl
+    Tof grabberTof(30, 0x32, 20, 21); // xshut, address, sda, scl
+    Tof frontTopTof(32, 0x33, 20, 21); // xshut, address, sda, scl
     
     frontTof.disable();
     leftTof.disable();
+    leftTof2.disable();
     grabberTof.disable();
     frontTopTof.disable();
-    delay(500); // Wait for reset
-
-    // Initialize sequentially
-    Serial.println("Init frontTof...");
+    // 
     frontTof.init(10);
     Serial.println("Init leftTof...");
     leftTof.init(10);
-    Serial.println("Init grabberTof...");
+    leftTof2.init(10);
     grabberTof.init(10);
     Serial.println("Init frontTopTof...");
     frontTopTof.init(10);
@@ -51,11 +50,12 @@ void setup()
     
     ColorSensor grabberSensor(11,12, 13, 14, 15);
     ColorSensor boxColorSensor(16, 17, 18, 19, 20);
-    
+
+
     OLED oled;
     if (!oled.begin()) {
         Serial.println("OLED init failed!");
-        while (1);
+        // while (1);
     }
     
     Robot robot(leftMotor, rightMotor, ir , frontTof , leftTof , frontTopTof , grabberTof , grabberSensor , boxColorSensor , oled);
@@ -70,34 +70,38 @@ void setup()
 
     // ---- Buttons ----
     // TODO: Verify these pin numbers!
-    pushbutton btnUp(40);
-    pushbutton btnDown(41);
-    pushbutton btnSelect(42);
+    // pushbutton btnUp(40);
+    // pushbutton btnDown(41);
+    // pushbutton btnSelect(42);
 
-    btnUp.init();
-    btnDown.init();
-    btnSelect.init();
-    Serial.println("button init done");
+    // btnUp.init();
+    // btnDown.init();
+    // btnSelect.init();
+    // Serial.println("button init done");
 
-    // ---- Menu System ----
-    MenuSystem menu(oled, btnUp, btnDown, btnSelect, grabberSensor, robot);
-    menu.begin();
+    // // ---- Menu System ----
+    // MenuSystem menu(oled, btnUp, btnDown, btnSelect, grabberSensor, robot);
+    // menu.begin();
 
-    // ---- Auto-Start Task 1 ----
-    oled.clear();
-    oled.display();
-    Task1::run(robot); // Runs until interrupted
-    Serial.println("task1 running");
-    Serial.println("Exiting Task1");
+    // // ---- Auto-Start Task 1 ----
+    // oled.clear();
+    // oled.display();
+    // Task1::run(robot); // Runs until interrupted
+    // Serial.println("task1 running");
+    // Serial.println("Exiting Task1");
 
-    // ---- Show Menu After Interrupt ----
-    menu.begin(); // Re-draw menu
-    Serial.println("Entering Menu Loop");
+    // // ---- Show Menu After Interrupt ----
+    // menu.begin(); // Re-draw menu
+    // Serial.println("Entering Menu Loop");
 
     // ---- Main Loop ----
     while (true)
     {
-        menu.update();
+        Serial.print(leftMotor.getTicks());
+        Serial.print("\t");
+        Serial.println(rightMotor.getTicks());
+        // robot.moveStraight();
+        // menu.update();
         
         // Optional: Keep sensor debug prints if needed, but they might slow down the menu
         // int raw[8];
