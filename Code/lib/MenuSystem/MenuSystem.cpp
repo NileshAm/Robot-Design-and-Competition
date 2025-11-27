@@ -77,12 +77,27 @@ void MenuSystem::runCalibration() {
     _oled.displayCenteredText("Calibrating...", 1);
     _oled.display();
 
-    //_sensor.calibrate();
-
-    delay(800);
+    _robot.calibrateIR();
+    
 
     _oled.clear();
     _oled.displayCenteredText("Calibration OK", 1);
+    _oled.display();
+    delay(1500);
+}
+void MenuSystem::lineFollow() {
+
+    _oled.clear();
+    _oled.displayCenteredText("line following.....", 1);
+    _oled.display();
+
+    while (true)
+    {
+        _robot.followLine();
+    }
+
+    _oled.clear();
+    _oled.displayCenteredText("Done", 1);
     _oled.display();
     delay(1500);
 }
@@ -118,7 +133,7 @@ void MenuSystem::update() {
             break;
 
         case 1:
-            runTask("Task 1", Task1::run);
+            lineFollow();
             break;
 
         case 2:

@@ -39,7 +39,7 @@ private:
     static const int menuCount = 8;
     String menuItems[menuCount] = {
         "Calibrate Color",
-        "Run Task 1",
+        "Line Follow",
         "Run Task 2",
         "Run Task 3",
         "Run Task 4",
@@ -55,5 +55,6 @@ private:
     void updatePage();
 
     void runCalibration();
+    void lineFollow();
     void runTask(const String &name, void (*fn)(Robot&));
 };

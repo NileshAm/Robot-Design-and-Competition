@@ -9,9 +9,6 @@
 #include <pushbutton.h>
 #include <MenuSystem.h>
 
-
-
-
 void setup()
 {
     Serial.begin(9600);
@@ -33,40 +30,64 @@ void setup()
     Tof grabberTof(30, 0x32, 20, 21); // xshut, address, sda, scl
     Tof frontTopTof(32, 0x33, 20, 21); // xshut, address, sda, scl
     
-    frontTof.disable();
-    leftTof.disable();
-    leftTof2.disable();
-    grabberTof.disable();
-    frontTopTof.disable();
-    // 
-    frontTof.init(10);
-    Serial.println("Init leftTof...");
-    leftTof.init(10);
-    leftTof2.init(10);
-    grabberTof.init(10);
-    Serial.println("Init frontTopTof...");
-    frontTopTof.init(10);
-    Serial.println("All ToF initialized");
+    // frontTof.disable();
+    // leftTof.disable();
+    // leftTof2.disable();
+    // grabberTof.disable();
+    // frontTopTof.disable();
+    // // 
+    // frontTof.init(10);
+    // leftTof.init(10);
+    // leftTof2.init(10);
+    // grabberTof.init(10);
+    // frontTopTof.init(10);
     
     ColorSensor grabberSensor(11,12, 13, 14, 15);
     ColorSensor boxColorSensor(16, 17, 18, 19, 20);
 
+    pushbutton btnUp(48);
+    pushbutton btnDown(50);
+    pushbutton btnSelect(52);
 
     OLED oled;
     if (!oled.begin()) {
         Serial.println("OLED init failed!");
-        // while (1);
+        while (1);
     }
     
+    MenuSystem *menu;
+    oled.clear();
+    oled.displayCenteredText("Booting...", 2);
+    delay(500);
+
+    btnUp.init();
+    btnDown.init();
+    btnSelect.init();
+
     Robot robot(leftMotor, rightMotor, ir , frontTof , leftTof , frontTopTof , grabberTof , grabberSensor , boxColorSensor , oled);
+    
+    menu = new MenuSystem(oled, btnUp, btnDown, btnSelect, grabberSensor, robot);
 
-    // ---- collect min/max while you sweep over line/background ----
-    // for (int i=0; i<200; ++i) {   // ~200 samples; adjust as needed
-    //     ir.updateSensors();         // calls readRaw() & updates min/max
-    //     delay(5);                   // small gap between samples
+    menu->begin();
+
+    // while (true)
+    // {
+    //     menu->update();
+    //     delay(10);
     // }
-    // ir.calibrate();               // compute scale/offset from min/max
+    
 
+    oled.clear();
+    oled.displayCenteredText("Calibrating IR...", 1);
+        // ---- collect min/max while you sweep over line/background ----
+    for (int i=0; i<20; ++i) {   // ~200 samples; adjust as needed
+        ir.updateSensors();         // calls readRaw() & updates min/max
+        delay(5);                   // small gap between samples
+    }
+    ir.calibrate();               // compute scale/offset from min/max
+    oled.clear();
+    oled.displayCenteredText("IR Calibrated", 1);
+    delay(2000);
 
     // ---- Buttons ----
     // TODO: Verify these pin numbers!
@@ -95,12 +116,15 @@ void setup()
     // Serial.println("Entering Menu Loop");
 
     // ---- Main Loop ----
+    oled.clear();
+    oled.displayCenteredText("starting to follow line", 1);
+    delay(1000);
     while (true)
     {
-        Serial.print(leftMotor.getTicks());
-        Serial.print("\t");
-        Serial.println(rightMotor.getTicks());
-        robot.moveStraight();
+        // Serial.print(leftMotor.getTicks());
+        // Serial.print("\t");
+        // Serial.println(rightMotor.getTicks());
+        robot.followLine();
         // menu.update();
         
         // Optional: Keep sensor debug prints if needed, but they might slow down the menu

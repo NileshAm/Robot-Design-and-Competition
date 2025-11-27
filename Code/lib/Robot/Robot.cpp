@@ -124,11 +124,13 @@ void Robot::goTillCM(float cm){
 }
 
 void Robot::calibrateIR(){
-    int angles[5] = {45, -90, 90, -90, 45};
-    for (int i = 0; i < 5; i++)
+    // int angles[5] = {45, -90, 90, -90, 45};
+    for (int i = 0; i < 200; i++)
     {
-        Robot::turn(angles[i], 10, [](Robot *r)
-                    { r->ir.updateSensors(); });
+        // Robot::turn(angles[i], 10, [](Robot *r)
+        //             { r->ir.updateSensors(); });
+        ir.updateSensors();
+        delay(5);
     }
     ir.calibrate();
 }
