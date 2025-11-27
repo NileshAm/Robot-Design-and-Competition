@@ -16,8 +16,8 @@ void setup()
 {
     Serial.begin(9600);
     
-    Motor leftMotor(42, 44, 4, 2, 46, 600);     // dir1, dir2, pwm, encA, encB, ticks/rev
-    Motor rightMotor(38, 36, 5, 3, 40, 600); // dir1, dir2, pwm, encA, encB, ticks/rev
+    Motor rightMotor(44, 42, 4, 2, 46, 600);     // dir1, dir2, pwm, encA, encB, ticks/rev
+    Motor leftMotor(36, 38, 5, 3, 40, 600); // dir1, dir2, pwm, encA, encB, ticks/rev
     leftMotor.init();
     rightMotor.init();
     
@@ -100,13 +100,14 @@ void setup()
         Serial.print(leftMotor.getTicks());
         Serial.print("\t");
         Serial.println(rightMotor.getTicks());
-        // robot.moveStraight();
+        robot.moveStraight();
         // menu.update();
         
         // Optional: Keep sensor debug prints if needed, but they might slow down the menu
         // int raw[8];
         // ir.readRaw(raw);
         // ...
+        delay(10);
     }
 }
 

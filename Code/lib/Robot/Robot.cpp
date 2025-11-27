@@ -13,7 +13,7 @@ Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof
     junction(IR_Arr),
     oled(oled),
 
-    _straightLinePID(0.1,0.2,0,0),
+    _straightLinePID(1.5,1,0,-0.25),
     _lineFollowerPID(0.25,0.00,0,70),
     _wallFollowerPID(0.25,0.1,0,90)
 
@@ -76,10 +76,12 @@ void Robot::_turnCore(int angle, bool useCb, uint16_t cbEveryMs, TurnCallback cb
 }
 
 void Robot::moveStraight(float speed) {
-  int error = MotorR.getTicks() - MotorL.getTicks();
-  int correction = (int)_straightLinePID.compute((float)error);
-  MotorR.setSpeed(speed + correction);
-  MotorL.setSpeed(speed - correction);
+    int error = MotorR.getTicks() - MotorL.getTicks();
+    MotorL.resetTicks();
+    MotorR.resetTicks();
+    int correction = (int)_straightLinePID.compute((float)error);
+    MotorR.setSpeed(speed + correction);
+    MotorL.setSpeed(speed - correction);
 
 }
 void Robot::moveStraight() {
