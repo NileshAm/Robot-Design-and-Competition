@@ -12,6 +12,12 @@
 class Robot {
     public:
         using TurnCallback = void (*)(Robot*);   // non-capturing lambda or plain function
+        
+        enum PIDType {
+            PID_STRAIGHT = 0,
+            PID_LINE = 1,
+            PID_WALL = 2
+        };
 
         Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof& leftTof, Tof& frontTopTof, Tof& grabberTof, ColorSensor& grabberSensor, ColorSensor& boxColorSensor, OLED& oled);
 
@@ -59,12 +65,16 @@ class Robot {
 
         void calibrateIR();
 
+        //void setInterruptButton(pushbutton& btn);
         void setInterruptButton(pushbutton& btn);
         bool isInterrupted();
 
+        void setPID(PIDType type, float p, float i, float d);
+        void getPID(PIDType type, float& p, float& i, float& d);
+
     private:
         pushbutton* _interruptButton = nullptr;
-        float _speed = 40;
+        float _speed = 20;
         PID _straightLinePID;
         PID _lineFollowerPID;
         PID _wallFollowerPID;

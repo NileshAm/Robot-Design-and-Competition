@@ -10,7 +10,13 @@ public:
     void setKp(float kp);
     void setKi(float ki);
     void setKd(float kd);
+    //void setKd(float kd);
     void updatePID(float kp, float ki, float kd);
+    void setConstants(float kp, float ki, float kd); // Alias for updatePID
+
+    float getP() const;
+    float getI() const;
+    float getD() const;
 
     // Other utilities
     void setSetpoint(float sp);

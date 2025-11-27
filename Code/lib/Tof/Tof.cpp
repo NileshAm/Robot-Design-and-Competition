@@ -26,7 +26,7 @@ void Tof::enable()
 void Tof::init(int offset)
 {
     digitalWrite(_xshut, HIGH);
-    delay(10);
+    delay(20);
     if(!_sensor.begin()){
         Serial.println("Tof failed to initialize");
         while (1);

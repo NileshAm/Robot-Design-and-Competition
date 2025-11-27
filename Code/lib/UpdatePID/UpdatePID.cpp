@@ -1,13 +1,13 @@
 #include "UpdatePID.h"
 
 UpdatePID::UpdatePID(Stream &serial)
-    : _serial(serial), _Kp(0), _Ki(0), _Kd(0) {}
+    : _serial(serial) {}
 
-void UpdatePID::update() {
+void UpdatePID::update(Robot& robot) {
     while (_serial.available()) {
         char c = _serial.read();
         if (c == '\n') {
-            parseCommand(_buffer);
+            parseCommand(_buffer, robot);
             _buffer = "";
         } else {
             _buffer += c;
@@ -15,27 +15,40 @@ void UpdatePID::update() {
     }
 }
 
-void UpdatePID::parseCommand(const String &cmd) {
-    int kpIndex = cmd.indexOf("Kp:");
-    int kiIndex = cmd.indexOf("Ki:");
-    int kdIndex = cmd.indexOf("Kd:");
-
-    if (kpIndex != -1 && kiIndex != -1 && kdIndex != -1) {
-        float kp = cmd.substring(kpIndex + 3, cmd.indexOf(',', kpIndex)).toFloat();
-        float ki = cmd.substring(kiIndex + 3, cmd.indexOf(',', kiIndex)).toFloat();
-        float kd = cmd.substring(kdIndex + 3).toFloat();
-
-        _Kp = kp;
-        _Ki = ki;
-        _Kd = kd;
-
-        _serial.println("PID updated: ");
-        _serial.print("Kp="); _serial.println(_Kp);
-        _serial.print("Ki="); _serial.println(_Ki);
-        _serial.print("Kd="); _serial.println(_Kd);
+void UpdatePID::parseCommand(const String &cmd, Robot& robot) {
+    String command = cmd;
+    command.trim();
+    
+    if (command.startsWith("SET")) {
+        // SET <ID> <P> <I> <D>
+        int firstSpace = command.indexOf(' ');
+        int secondSpace = command.indexOf(' ', firstSpace + 1);
+        int thirdSpace = command.indexOf(' ', secondSpace + 1);
+        int fourthSpace = command.indexOf(' ', thirdSpace + 1);
+        
+        if (firstSpace != -1 && secondSpace != -1 && thirdSpace != -1 && fourthSpace != -1) {
+            int id = command.substring(firstSpace + 1, secondSpace).toInt();
+            float p = command.substring(secondSpace + 1, thirdSpace).toFloat();
+            float i = command.substring(thirdSpace + 1, fourthSpace).toFloat();
+            float d = command.substring(fourthSpace + 1).toFloat();
+            
+            robot.setPID((Robot::PIDType)id, p, i, d);
+            _serial.println("OK");
+        }
+    } else if (command.startsWith("GET")) {
+        // GET <ID>
+        int firstSpace = command.indexOf(' ');
+        if (firstSpace != -1) {
+            int id = command.substring(firstSpace + 1).toInt();
+            float p, i, d;
+            robot.getPID((Robot::PIDType)id, p, i, d);
+            
+            // VAL <ID> <P> <I> <D>
+            _serial.print("VAL ");
+            _serial.print(id); _serial.print(" ");
+            _serial.print(p, 6); _serial.print(" ");
+            _serial.print(i, 6); _serial.print(" ");
+            _serial.println(d, 6);
+        }
     }
 }
-
-float UpdatePID::getKp() const { return _Kp; }
-float UpdatePID::getKi() const { return _Ki; }
-float UpdatePID::getKd() const { return _Kd; }
