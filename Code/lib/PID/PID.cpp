@@ -37,14 +37,6 @@ void PID::updatePID(float kp, float ki, float kd) {
     _kp = kp; _ki = ki; _kd = kd;
 }
 
-void PID::setConstants(float kp, float ki, float kd) {
-    updatePID(kp, ki, kd);
-}
-
-float PID::getP() const { return _kp; }
-float PID::getI() const { return _ki; }
-float PID::getD() const { return _kd; }
-
 void PID::setSetpoint(float sp) { _setpoint = sp; }
 
 void PID::updatePrevError(float prevError) { _prevError = prevError; }

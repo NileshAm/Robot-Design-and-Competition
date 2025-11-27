@@ -13,8 +13,8 @@ Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof
     junction(IR_Arr),
     oled(oled),
 
-    _straightLinePID(0.1,0.2,0,0),
-    _lineFollowerPID(0.11,0.0001,0.000005,70),
+    _straightLinePID(1.5,1,0,-0.25),
+    _lineFollowerPID(0.25,0.00,0,70),
     _wallFollowerPID(0.25,0.1,0,90)
 
 {
@@ -144,38 +144,4 @@ bool Robot::isInterrupted() {
         return true;
     }
     return false;
-}
-
-void Robot::setPID(PIDType type, float p, float i, float d) {
-    switch (type) {
-        case PID_STRAIGHT:
-            _straightLinePID.setConstants(p, i, d);
-            break;
-        case PID_LINE:
-            _lineFollowerPID.setConstants(p, i, d);
-            break;
-        case PID_WALL:
-            _wallFollowerPID.setConstants(p, i, d);
-            break;
-    }
-}
-
-void Robot::getPID(PIDType type, float& p, float& i, float& d) {
-    switch (type) {
-        case PID_STRAIGHT:
-            p = _straightLinePID.getP();
-            i = _straightLinePID.getI();
-            d = _straightLinePID.getD();
-            break;
-        case PID_LINE:
-            p = _lineFollowerPID.getP();
-            i = _lineFollowerPID.getI();
-            d = _lineFollowerPID.getD();
-            break;
-        case PID_WALL:
-            p = _wallFollowerPID.getP();
-            i = _wallFollowerPID.getI();
-            d = _wallFollowerPID.getD();
-            break;
-    }
 }

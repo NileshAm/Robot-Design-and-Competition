@@ -6,7 +6,8 @@
 #include <ColorSensor.h>
 #include <Robot.h>
 #include <Utils.h>
-#include <UpdatePID.h>
+#include <pushbutton.h>
+#include <MenuSystem.h>
 
 
 
@@ -14,10 +15,9 @@
 void setup()
 {
     Serial.begin(9600);
-    Serial2.begin(9600); // UART for ESP32 PID Tuner
     
-    Motor leftMotor(42, 44, 4, 2, 46, 600);     // dir1, dir2, pwm, encA, encB, ticks/rev
-    Motor rightMotor(38, 36, 5, 3, 40, 600); // dir1, dir2, pwm, encA, encB, ticks/rev
+    Motor rightMotor(44, 42, 4, 2, 46, 600);     // dir1, dir2, pwm, encA, encB, ticks/rev
+    Motor leftMotor(36, 38, 5, 3, 40, 600); // dir1, dir2, pwm, encA, encB, ticks/rev
     leftMotor.init();
     rightMotor.init();
     
@@ -65,10 +65,7 @@ void setup()
     //     ir.updateSensors();         // calls readRaw() & updates min/max
     //     delay(5);                   // small gap between samples
     // }
-    
-     Robot robot(leftMotor, rightMotor, ir , frontTof , leftTof , frontTopTof , grabberTof , grabberSensor , boxColorSensor , oled);
-     
-     UpdatePID pidTuner(Serial2);
+    // ir.calibrate();               // compute scale/offset from min/max
 
 
     // ---- Buttons ----
@@ -112,12 +109,12 @@ void setup()
         // ...
         delay(10);
     }
-    
-
-    
 }
 
 void loop()
 {
-    
+    // Empty because we have a while(true) in setup, 
+    // but typically we should move the while(true) content here.
+    // For now, keeping it in setup to match existing style, 
+    // but the while(true) above handles the loop.
 }
