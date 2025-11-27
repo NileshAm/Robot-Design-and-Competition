@@ -25,6 +25,7 @@ bool OLED::begin() {
 
 void OLED::clear() {
     _oled.clearDisplay();
+    _oled.display();
 }
 
 void OLED::displayText(const String &text, int16_t x, int16_t y, uint8_t size) {
@@ -32,6 +33,7 @@ void OLED::displayText(const String &text, int16_t x, int16_t y, uint8_t size) {
     _oled.setTextColor(SSD1306_WHITE);
     _oled.setCursor(x, y);
     _oled.print(text);
+    _oled.display();
 }
 
 void OLED::displayCenteredText(const String &text, uint8_t size) {
@@ -44,6 +46,7 @@ void OLED::displayCenteredText(const String &text, uint8_t size) {
     _oled.setCursor(x, y);
     _oled.setTextColor(SSD1306_WHITE);
     _oled.print(text);
+    _oled.display();
 }
 
 void OLED::display() {
@@ -52,8 +55,10 @@ void OLED::display() {
 
 void OLED::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1) {
     _oled.drawLine(x0, y0, x1, y1, SSD1306_WHITE);
+    _oled.display();
 }
 
 void OLED::drawRect(int16_t x, int16_t y, int16_t w, int16_t h) {
     _oled.drawRect(x, y, w, h, SSD1306_WHITE);
+    _oled.display();
 }
