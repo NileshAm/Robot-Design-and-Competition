@@ -108,7 +108,6 @@ void MenuSystem::ramp() {
     while (true)
     {
         _robot.followRamp();
-        delay(50);
     }
 }
 // FIX: Make the values scroll down
