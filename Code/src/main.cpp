@@ -171,6 +171,35 @@ void setup()
         // int raw[8];
         // ir.readRaw(raw);
         // ...
+        // Check for PID updates/requests
+        pidUpdater.update();
+        if (pidUpdater.isUpdated()) {
+            int type = pidUpdater.getType();
+            float kp = pidUpdater.getKp();
+            float ki = pidUpdater.getKi();
+            float kd = pidUpdater.getKd();
+
+            oled.clear();
+            oled.displayText("PID Updated!", 0, 0, 1);
+            
+            if (type == 0) {
+                robot.setLineFollowerPID(kp, ki, kd);
+                oled.displayText("Type: Line", 0, 10, 1);
+            } else if (type == 1) {
+                robot.setWallFollowerPID(kp, ki, kd);
+                oled.displayText("Type: Wall", 0, 10, 1);
+            } else if (type == 2) {
+                robot.setStraightLinePID(kp, ki, kd);
+                oled.displayText("Type: Straight", 0, 10, 1);
+            }
+
+            oled.displayText("Kp: " + String(kp), 0, 20, 1);
+            oled.displayText("Ki: " + String(ki), 0, 30, 1);
+            oled.displayText("Kd: " + String(kd), 0, 40, 1);
+            pidUpdater.resetUpdated();
+            delay(2000);
+        }
+
         delay(10);
     }
 }

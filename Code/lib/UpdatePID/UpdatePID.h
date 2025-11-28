@@ -11,10 +11,12 @@ public:
     void parseCommand(const String &cmd);
     bool isUpdated() const;
     void resetUpdated();
+    int getType() const;
 
 private:
     Stream &_serial;
     float _Kp, _Ki, _Kd;
+    int _type;
     bool _updated;
     String _buffer;
 

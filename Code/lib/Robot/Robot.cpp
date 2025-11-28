@@ -150,3 +150,11 @@ bool Robot::isInterrupted() {
 void Robot::setLineFollowerPID(float kp, float ki, float kd) {
     _lineFollowerPID.updatePID(kp, ki, kd);
 }
+
+void Robot::setWallFollowerPID(float kp, float ki, float kd) {
+    _wallFollowerPID.updatePID(kp, ki, kd);
+}
+
+void Robot::setStraightLinePID(float kp, float ki, float kd) {
+    _straightLinePID.updatePID(kp, ki, kd);
+}
