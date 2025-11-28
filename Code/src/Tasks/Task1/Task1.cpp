@@ -247,7 +247,7 @@ namespace Task1
                 {
                     _detectBox(robot, xDir, 1);
                 }
-                if (robot.grabberTof.readRange() < 10) // TODO: tune the value to accurtely detect left box
+                if (robot.rightTof.readRange() < 10) // TODO: tune the value to accurtely detect left box
                 {
                     _detectBox(robot, xDir, -1);
                 }

@@ -26,23 +26,23 @@ void setup()
     IRArray ir(8, PINS, W, 0.5f);
     ir.init();
     
-    Tof frontTof(24, 0x30, 20, 21); // xshut, address, sda, scl
-    Tof leftTof(26, 0x31, 20, 21); // xshut, address, sda, scl
-    Tof leftTof2(28, 0x34, 20, 21); // xshut, address, sda, scl
-    Tof grabberTof(30, 0x32, 20, 21); // xshut, address, sda, scl
-    Tof frontTopTof(32, 0x33, 20, 21); // xshut, address, sda, scl
+    Tof frontTof(26, 0x30, 20, 21); // xshut, address, sda, scl
+    Tof leftTof(24, 0x31, 20, 21); // xshut, address, sda, scl
+    Tof leftTof2(32, 0x34, 20, 21); // xshut, address, sda, scl
+    Tof rightTof(28, 0x32, 20, 21); // xshut, address, sda, scl
+    Tof frontTopTof(30, 0x33, 20, 21); // xshut, address, sda, scl
     
-    // frontTof.disable();
-    // leftTof.disable();
-    // leftTof2.disable();
-    // grabberTof.disable();
-    // frontTopTof.disable();
-    // // 
-    // frontTof.init(10);
-    // leftTof.init(10);
-    // leftTof2.init(10);
-    // grabberTof.init(10);
-    // frontTopTof.init(10);
+    frontTof.disable();
+    leftTof.disable();
+    leftTof2.disable();
+    rightTof.disable();
+    frontTopTof.disable();
+    
+    frontTof.init(20);
+    leftTof.init(22);
+    leftTof2.init(0);
+    rightTof.init(16);
+    frontTopTof.init(29);
     
     ColorSensor grabberSensor(11,12, 13, 14, 15);
     ColorSensor boxColorSensor(16, 17, 18, 19, 20);
@@ -95,7 +95,7 @@ void setup()
     btnDown.init();
     btnSelect.init();
 
-    Robot robot(leftMotor, rightMotor, ir , frontTof , leftTof , frontTopTof , grabberTof , grabberSensor , boxColorSensor , oled);
+    Robot robot(leftMotor, rightMotor, ir , frontTof , leftTof , frontTopTof , rightTof , grabberSensor , boxColorSensor , oled);
     
     if (pidUpdater.isUpdated()) {
         robot.setLineFollowerPID(pidUpdater.getKp(), pidUpdater.getKi(), pidUpdater.getKd());
