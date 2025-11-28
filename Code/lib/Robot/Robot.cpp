@@ -14,7 +14,7 @@ Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof
     oled(oled),
 
     _straightLinePID(1.5,1,0,-0.25),
-    _lineFollowerPID(0.25,0.00,0,70),
+    _lineFollowerPID(0.02,0,0,1400),
     _wallFollowerPID(0.25,0.1,0,90)
 
 {
@@ -90,7 +90,6 @@ void Robot::moveStraight() {
 
 void Robot::followLine(){
     int error = ir.weightedSum();
-    error = constrain(error, 0, 130);
     int correction = (int)_lineFollowerPID.compute((float)error);
 
     MotorR.setSpeed(_speed - correction);
