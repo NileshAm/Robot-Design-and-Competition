@@ -15,10 +15,17 @@ const char* password = "password123";  // AP Password
 #define RXD2 16
 #define TXD2 17
 
+// Current PID Values
+float currentKp = 1.0;
+float currentKi = 0.0;
+float currentKd = 0.0;
+
 WebServer server(80);
 
 // HTML Page
-const char index_html[] PROGMEM = R"rawliteral(
+// Moved to function to allow dynamic values
+void handleRoot() {
+  String html = R"rawliteral(
 <!DOCTYPE HTML><html>
 <head>
   <title>PID Tuner</title>
@@ -32,23 +39,32 @@ const char index_html[] PROGMEM = R"rawliteral(
 <body>
   <h2>Robot PID Tuner</h2>
   <form action="/update">
-    Kp: <input type="text" name="kp" value="1.0"><br>
-    Ki: <input type="text" name="ki" value="0.0"><br>
-    Kd: <input type="text" name="kd" value="0.0"><br>
+    Kp: <input type="text" name="kp" value=")rawliteral";
+  
+  html += String(currentKp);
+  html += R"rawliteral("><br>
+    Ki: <input type="text" name="ki" value=")rawliteral";
+  html += String(currentKi);
+  html += R"rawliteral("><br>
+    Kd: <input type="text" name="kd" value=")rawliteral";
+  html += String(currentKd);
+  html += R"rawliteral("><br>
     <input type="submit" value="Update Robot">
   </form>
 </body>
 </html>
 )rawliteral";
-
-void handleRoot() {
-  server.send(200, "text/html", index_html);
+  server.send(200, "text/html", html);
 }
 
 void handleUpdate() {
   String kp = server.arg("kp");
   String ki = server.arg("ki");
   String kd = server.arg("kd");
+
+  currentKp = kp.toFloat();
+  currentKi = ki.toFloat();
+  currentKd = kd.toFloat();
 
   String message = "Kp:" + kp + ",Ki:" + ki + ",Kd:" + kd + "\n";
   
