@@ -30,6 +30,7 @@ class Robot {
 
         void moveStraight();
         void moveStraight(float speed);
+        void followRamp(float speed = -20);
         void followLine();
         void followSingleWall();
         void followDoubleWall();
@@ -74,6 +75,7 @@ class Robot {
         float _speed = 40;
         PID _straightLinePID;
         PID _lineFollowerPID;
+        PID _rampPID;
         PID _singleWallFollowerPID;
         PID _singleWallDistancePID;
         PID _doubleWallFollowerPID;

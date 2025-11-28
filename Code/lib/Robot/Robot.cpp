@@ -15,6 +15,7 @@ Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof
     oled(oled),
 
     _straightLinePID(1.5,1,0,-0.25),
+    _rampPID(1.5,1,0,-0.25),
     _lineFollowerPID(0.02,0,0,1400),
     // _singleWallFollowerPID(2,0.15,0,0),
     // _singleWallDistancePID(0.5,0,0.05,100),
@@ -87,8 +88,17 @@ void Robot::moveStraight(float speed) {
     int correction = (int)_straightLinePID.compute((float)error);
     MotorR.setSpeed(speed + correction);
     MotorL.setSpeed(speed - correction);
-
 }
+
+void Robot::followRamp(float speed) {
+    int error = MotorR.getTicks() - MotorL.getTicks();
+    MotorL.resetTicks();
+    MotorR.resetTicks();
+    int correction = (int)_straightLinePID.compute((float)error);
+    MotorR.setSpeed(speed + correction);
+    MotorL.setSpeed(speed - correction);
+}
+
 void Robot::moveStraight() {
     moveStraight(_speed);
 }

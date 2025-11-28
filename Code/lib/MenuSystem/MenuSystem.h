@@ -36,16 +36,17 @@ private:
     static const int itemsPerPage = 5;
 
     // Menu items
-    static const int menuCount = 8;
+    static const int menuCount = 9;
     String menuItems[menuCount] = {
+        "Ramp",
         "Calibrate Color",
         "Line Follow",
-        "Run Task 2",
         "Run Task 3",
         "Run Task 4",
         "Run Task 5",
         "Run Task 6",
-        "Run All"
+        "Run All",
+        "TOF Debug",
     };
 
     int currentIndex = 0;   // Selected entry
@@ -54,7 +55,10 @@ private:
     void drawMenu();
     void updatePage();
 
-    void runCalibration();
+    void calibrateIR();
+    void ramp();
+    void debugTOF();
+    void debugIR();
     void lineFollow();
     void runTask(const String &name, void (*fn)(Robot&));
 };

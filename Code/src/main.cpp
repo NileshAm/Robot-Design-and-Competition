@@ -14,17 +14,23 @@ void setup()
 {
     Serial.begin(9600);
     Serial2.begin(9600); // ESP32 communication
+
+    OLED oled;
+    oled.begin();
+    oled.displayText("Initializing...", 0, 0, 1);    
     
     Motor rightMotor(44, 42, 4, 2, 46, 600);     // dir1, dir2, pwm, encA, encB, ticks/rev
     Motor leftMotor(36, 38, 5, 3, 40, 600); // dir1, dir2, pwm, encA, encB, ticks/rev
     leftMotor.init();
     rightMotor.init();
+    oled.displayText("Motor init complete...", 0, 10, 1);    
     
     const uint8_t PINS[8] = {A0,A1,A2,A3,A4,A5,A6,A7};
     // equal weights (or set your own)
     const float   W[8]    = {0,100,200,300,400,500,600,700};
     IRArray ir(8, PINS, W, 0.5f);
     ir.init();
+    oled.displayText("IR init complete...", 0, 20, 1);    
     
     Tof frontTof(26, 0x30, 20, 21); // xshut, address, sda, scl
     Tof leftTof(24, 0x31, 20, 21); // xshut, address, sda, scl
@@ -39,30 +45,41 @@ void setup()
     frontTopTof.disable();
     
     frontTof.init(20);
-    leftTof.init(22);
-    leftTof2.init(0);
+    leftTof.init(24);
+    leftTof2.init(-9);
     rightTof.init(16);
     frontTopTof.init(29);
+    oled.displayText("TOF init complete...", 0, 30, 1);    
     
     ColorSensor grabberSensor(11,12, 13, 14, 15);
     ColorSensor boxColorSensor(16, 17, 18, 19, 20);
-
-    pushbutton btnUp(48);
-    pushbutton btnDown(50);
+    oled.displayText("Color init complete...", 0, 40, 1);    
+    
+    pushbutton btnUp(50);
+    pushbutton btnDown(48);
     pushbutton btnSelect(52);
+    btnUp.init();
+    btnDown.init();
+    btnSelect.init();
+    oled.clear();
+    oled.displayText("Button init complete...", 0, 0, 1); 
+    
+    Robot robot(leftMotor, rightMotor, ir, frontTof, leftTof, leftTof2, frontTopTof, rightTof, grabberSensor, boxColorSensor, oled);
+    oled.displayText("Robot init complete...", 0, 10, 1);
 
-    OLED oled;
-    if (!oled.begin()) {
-        Serial.println("OLED init failed!");
-        while (1);
+    oled.clear();
+    MenuSystem *menu;
+    menu = new MenuSystem(oled, btnUp, btnDown, btnSelect, grabberSensor, robot);
+    menu->begin();
+    while (true)
+    {
+        menu->update();
+        delay(10);
     }
     
-    MenuSystem *menu;
     oled.clear();
-    oled.displayCenteredText("Booting...", 2);
-    //oled.displayCenteredText("Booting...", 2);
     delay(500);
-
+    
     // ---- PID Update Check ----
     UpdatePID pidUpdater(Serial2);
     oled.clear();
@@ -91,11 +108,7 @@ void setup()
     }
     delay(500);
 
-    btnUp.init();
-    btnDown.init();
-    btnSelect.init();
 
-    Robot robot(leftMotor, rightMotor, ir , frontTof , leftTof , frontTopTof , rightTof , grabberSensor , boxColorSensor , oled);
     
     if (pidUpdater.isUpdated()) {
         robot.setLineFollowerPID(pidUpdater.getKp(), pidUpdater.getKi(), pidUpdater.getKd());
@@ -106,25 +119,15 @@ void setup()
         delay(5000);
     }
     
-    menu = new MenuSystem(oled, btnUp, btnDown, btnSelect, grabberSensor, robot);
-
-    menu->begin();
-
-    // while (true)
-    // {
-    //     menu->update();
-    //     delay(10);
-    // }
-    
 
     oled.clear();
     oled.displayCenteredText("Calibrating IR...", 1);
         // ---- collect min/max while you sweep over line/background ----
-    for (int i=0; i<20; ++i) {   // ~200 samples; adjust as needed
-        ir.updateSensors();         // calls readRaw() & updates min/max
-        delay(5);                   // small gap between samples
-    }
-    ir.calibrate();               // compute scale/offset from min/max
+    // for (int i=0; i<20; ++i) {   // ~200 samples; adjust as needed
+    //     ir.updateSensors();         // calls readRaw() & updates min/max
+    //     delay(5);                   // small gap between samples
+    // }
+    // ir.calibrate();               // compute scale/offset from min/max
     oled.clear();
     oled.displayCenteredText("IR Calibrated", 1);
     delay(2000);
@@ -159,12 +162,23 @@ void setup()
     oled.clear();
     oled.displayCenteredText("starting to follow line", 1);
     delay(1000);
-    while (true)
+    while (robot.leftTof2.readRange() < 200)
     {
+        Serial.println(btnDown.buttonStatus());
         // Serial.print(leftMotor.getTicks());
         // Serial.print("\t");
         // Serial.println(rightMotor.getTicks());
-        robot.followLine();
+        // robot.followLine();
+        // robot.followSingleWall();
+        // Serial.print(rightTof.readRange());
+        // Serial.print("\t");
+        // Serial.print(leftTof.readRange());
+        // Serial.print("\t");
+        // Serial.print(leftTof2.readRange());
+        // Serial.print("\t");
+        // Serial.print(frontTof.readRange());
+        // Serial.print("\t");
+        // Serial.println(frontTopTof.readRange());
         // menu.update();
         
         // Optional: Keep sensor debug prints if needed, but they might slow down the menu
@@ -172,36 +186,37 @@ void setup()
         // ir.readRaw(raw);
         // ...
         // Check for PID updates/requests
-        pidUpdater.update();
-        if (pidUpdater.isUpdated()) {
-            int type = pidUpdater.getType();
-            float kp = pidUpdater.getKp();
-            float ki = pidUpdater.getKi();
-            float kd = pidUpdater.getKd();
+        // pidUpdater.update();
+        // if (pidUpdater.isUpdated()) {
+        //     int type = pidUpdater.getType();
+        //     float kp = pidUpdater.getKp();
+        //     float ki = pidUpdater.getKi();
+        //     float kd = pidUpdater.getKd();
 
-            oled.clear();
-            oled.displayText("PID Updated!", 0, 0, 1);
+        //     oled.clear();
+        //     oled.displayText("PID Updated!", 0, 0, 1);
             
-            if (type == 0) {
-                robot.setLineFollowerPID(kp, ki, kd);
-                oled.displayText("Type: Line", 0, 10, 1);
-            } else if (type == 1) {
-                robot.setWallFollowerPID(kp, ki, kd);
-                oled.displayText("Type: Wall", 0, 10, 1);
-            } else if (type == 2) {
-                robot.setStraightLinePID(kp, ki, kd);
-                oled.displayText("Type: Straight", 0, 10, 1);
-            }
+        //     if (type == 0) {
+        //         robot.setLineFollowerPID(kp, ki, kd);
+        //         oled.displayText("Type: Line", 0, 10, 1);
+        //     } else if (type == 1) {
+        //         robot.setWallFollowerPID(kp, ki, kd);
+        //         oled.displayText("Type: Wall", 0, 10, 1);
+        //     } else if (type == 2) {
+        //         robot.setStraightLinePID(kp, ki, kd);
+        //         oled.displayText("Type: Straight", 0, 10, 1);
+        //     }
 
-            oled.displayText("Kp: " + String(kp), 0, 20, 1);
-            oled.displayText("Ki: " + String(ki), 0, 30, 1);
-            oled.displayText("Kd: " + String(kd), 0, 40, 1);
-            pidUpdater.resetUpdated();
-            delay(2000);
-        }
+        //     oled.displayText("Kp: " + String(kp), 0, 20, 1);
+        //     oled.displayText("Ki: " + String(ki), 0, 30, 1);
+        //     oled.displayText("Kd: " + String(kd), 0, 40, 1);
+        //     pidUpdater.resetUpdated();
+        //     delay(2000);
+        // }
 
         delay(10);
     }
+    robot.stop();
 }
 
 void loop()

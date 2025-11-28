@@ -12,12 +12,13 @@ bool OLED::begin() {
         
         // 2. Try Address 0x3D
         if (!_oled.begin(SSD1306_SWITCHCAPVCC, 0x3D)) { 
-            Serial.println("DEBUG: OLED failed completely."); // Add this
+            Serial.println("OLED failed completely."); // Add this
+            while (1);
             return false;
         }
     }
     
-    Serial.println("DEBUG: OLED Started Successfully!"); // Add this
+    Serial.println("OLED Started Successfully!"); // Add this
     _oled.clearDisplay();
     _oled.display();
     return true;

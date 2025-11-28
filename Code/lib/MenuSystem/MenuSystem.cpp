@@ -72,7 +72,22 @@ void MenuSystem::runTask(const String &name, void (*fn)(Robot&)) {
 // -------------------------------
 // Calibration handler
 // -------------------------------
-void MenuSystem::runCalibration() {
+void MenuSystem::lineFollow() {
+    _oled.clear();
+    _oled.displayCenteredText("line following.....", 1);
+    _oled.display();
+ 
+    while (true)
+    {
+        _robot.followLine();
+    }
+
+    _oled.clear();
+    _oled.displayCenteredText("Done", 1);
+    _oled.display();
+    delay(1500);
+}
+void MenuSystem::calibrateIR() {
     _oled.clear();
     _oled.displayCenteredText("Calibrating...", 1);
     _oled.display();
@@ -85,21 +100,74 @@ void MenuSystem::runCalibration() {
     _oled.display();
     delay(1500);
 }
-void MenuSystem::lineFollow() {
-
+void MenuSystem::ramp() {
     _oled.clear();
-    _oled.displayCenteredText("line following.....", 1);
+    _oled.displayCenteredText("Ramp running", 1);
     _oled.display();
 
     while (true)
     {
-        _robot.followLine();
+        _robot.followRamp();
+        delay(50);
     }
-
+}
+// FIX: Make the values scroll down
+void MenuSystem::debugTOF() {
     _oled.clear();
-    _oled.displayCenteredText("Done", 1);
-    _oled.display();
-    delay(1500);
+    _oled.displayText("Front", 0, 0, 1);
+    _oled.displayText("Top", 30, 0, 1);
+    _oled.displayText("left", 60, 0, 1);
+    _oled.displayText("left2", 90, 0, 1);
+    _oled.displayText("right", 120, 0, 1);
+    int id =1;
+    while (true)
+    {
+        if(id >= 5){
+            _oled.clear();
+            _oled.displayText("Front", 0, 0, 1);
+            _oled.displayText("Top", 30, 0, 1);
+            _oled.displayText("left", 60, 0, 1);
+            _oled.displayText("left2", 90, 0, 1);
+            _oled.displayText("right", 120, 0, 1);
+            id = 1;
+        }
+        else{
+            _oled.displayText((String)_robot.frontTof.readRange(), 0, id*10, 1);
+            _oled.displayText((String)_robot.frontTopTof.readRange(), 30, id*10, 1);
+            _oled.displayText((String)_robot.leftTof.readRange(), 60, id*10, 1);
+            _oled.displayText((String)_robot.leftTof2.readRange(), 90, id*10, 1);
+            _oled.displayText((String)_robot.rightTof.readRange(), 120, id*10, 1);
+        }
+        delay(100);
+    }
+}
+// FIX: Make the values scroll down
+void MenuSystem::debugIR() {
+    _oled.clear();
+    int id =1;
+    while (true)
+    {
+        if(id >= 5){
+            _oled.clear();
+            bool dig[8];
+            _robot.ir.digitalRead(dig);
+
+            for (int i = 0; i < 8; i++){
+                _oled.displayText((String)dig[i], i * 10, id * 10, 1);
+            }
+            
+            id = 1;
+        }
+        else{
+            bool dig[8];
+            _robot.ir.digitalRead(dig);
+    
+            for (int i = 0; i < 8; i++){
+                _oled.displayText((String)dig[i], i * 10, id * 10, 1);
+            }
+        }
+        delay(100);
+    }
 }
 
 // -------------------------------
@@ -129,7 +197,8 @@ void MenuSystem::update() {
         switch (currentIndex) {
 
         case 0:
-            runCalibration();
+            // calibrateIR();
+            ramp();
             break;
 
         case 1:
@@ -158,6 +227,12 @@ void MenuSystem::update() {
 
         case 7:
             runTask("All Tasks", nullptr);
+            break;
+        case 8:
+            debugTOF();
+            break;
+        case 9:
+            debugIR();
             break;
         }
 
