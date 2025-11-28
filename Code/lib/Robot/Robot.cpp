@@ -147,3 +147,7 @@ bool Robot::isInterrupted() {
     }
     return false;
 }
+
+void Robot::setLineFollowerPID(float kp, float ki, float kd) {
+    _lineFollowerPID.updatePID(kp, ki, kd);
+}

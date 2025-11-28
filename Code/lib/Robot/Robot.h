@@ -61,6 +61,7 @@ class Robot {
 
         void setInterruptButton(pushbutton& btn);
         bool isInterrupted();
+        void setLineFollowerPID(float kp, float ki, float kd);
 
     private:
         pushbutton* _interruptButton = nullptr;

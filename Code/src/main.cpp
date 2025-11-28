@@ -8,10 +8,12 @@
 #include <Utils.h>
 #include <pushbutton.h>
 #include <MenuSystem.h>
+#include <UpdatePID.h>
 
 void setup()
 {
     Serial.begin(9600);
+    Serial2.begin(9600); // ESP32 communication
     
     Motor rightMotor(44, 42, 4, 2, 46, 600);     // dir1, dir2, pwm, encA, encB, ticks/rev
     Motor leftMotor(36, 38, 5, 3, 40, 600); // dir1, dir2, pwm, encA, encB, ticks/rev
@@ -58,6 +60,35 @@ void setup()
     MenuSystem *menu;
     oled.clear();
     oled.displayCenteredText("Booting...", 2);
+    //oled.displayCenteredText("Booting...", 2);
+    delay(500);
+
+    // ---- PID Update Check ----
+    UpdatePID pidUpdater(Serial2);
+    oled.clear();
+    oled.displayCenteredText("Waiting for PID...", 1);
+    
+    unsigned long startTime = millis();
+    while (millis() - startTime < 2000) {
+        pidUpdater.update();
+        if (pidUpdater.isUpdated()) {
+            break;
+        }
+    }
+
+    if (pidUpdater.isUpdated()) {
+        oled.clear();
+        oled.displayCenteredText("PID Updated!", 2);
+        
+        // Update Robot PID
+        // Note: Robot is initialized below, so we need to store values or init robot earlier.
+        // Since robot depends on motors/sensors which are already init, we can move robot init up 
+        // OR just set the values after robot init.
+        // Let's set a flag and values to update after robot creation.
+    } else {
+        oled.clear();
+        oled.displayCenteredText("No PID Update", 1);
+    }
     delay(500);
 
     btnUp.init();
@@ -65,6 +96,15 @@ void setup()
     btnSelect.init();
 
     Robot robot(leftMotor, rightMotor, ir , frontTof , leftTof , frontTopTof , grabberTof , grabberSensor , boxColorSensor , oled);
+    
+    if (pidUpdater.isUpdated()) {
+        robot.setLineFollowerPID(pidUpdater.getKp(), pidUpdater.getKi(), pidUpdater.getKd());
+        oled.clear();
+        oled.displayText("Kp: " + String(pidUpdater.getKp()), 0, 0, 1);
+        oled.displayText("Ki: " + String(pidUpdater.getKi()), 0, 10, 1);
+        oled.displayText("Kd: " + String(pidUpdater.getKd()), 0, 20, 1);
+        delay(5000);
+    }
     
     menu = new MenuSystem(oled, btnUp, btnDown, btnSelect, grabberSensor, robot);
 
