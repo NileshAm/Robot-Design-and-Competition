@@ -13,13 +13,14 @@ class Robot {
     public:
         using TurnCallback = void (*)(Robot*);   // non-capturing lambda or plain function
 
-        Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof& leftTof, Tof& frontTopTof, Tof& rightTof, ColorSensor& grabberSensor, ColorSensor& boxColorSensor, OLED& oled);
+        Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof& leftTof, Tof& leftTof2, Tof& frontTopTof, Tof& rightTof, ColorSensor& grabberSensor, ColorSensor& boxColorSensor, OLED& oled);
 
         Motor& MotorR;        // dir1, dir2, pwm, encA, encB, ticks/rev
         Motor& MotorL;        // dir1, dir2, pwm, encA, encB, ticks/rev
         IRArray& ir;    // number of sensors, pins array
         Tof& frontTof;      // xshut, address, sda, scl
         Tof& leftTof;      // xshut, address, sda, scl
+        Tof& leftTof2;      // xshut, address, sda, scl
         Tof& frontTopTof;      // xshut, address, sda, scl
         Tof& rightTof;      // xshut, address, sda, scl //act as the right tof also
         ColorSensor& grabberSensor;
@@ -30,7 +31,8 @@ class Robot {
         void moveStraight();
         void moveStraight(float speed);
         void followLine();
-        void followWall();
+        void followSingleWall();
+        void followDoubleWall();
 
         
         /**
@@ -62,7 +64,9 @@ class Robot {
         void setInterruptButton(pushbutton& btn);
         bool isInterrupted();
         void setLineFollowerPID(float kp, float ki, float kd);
-        void setWallFollowerPID(float kp, float ki, float kd);
+        void setSingleWallFollowerPID(float kp, float ki, float kd);
+        void setSingleWallDistancePID(float kp, float ki, float kd);
+        void setDoubleWallFollowerPID(float kp, float ki, float kd);
         void setStraightLinePID(float kp, float ki, float kd);
 
     private:
@@ -70,7 +74,9 @@ class Robot {
         float _speed = 40;
         PID _straightLinePID;
         PID _lineFollowerPID;
-        PID _wallFollowerPID;
+        PID _singleWallFollowerPID;
+        PID _singleWallDistancePID;
+        PID _doubleWallFollowerPID;
         uint16_t _ticksPer360 = 1150;
         double _ticksPerDegree;
 

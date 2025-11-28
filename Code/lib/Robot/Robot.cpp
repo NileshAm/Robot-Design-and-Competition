@@ -1,11 +1,12 @@
 #include "Robot.h"
 
-Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof& leftTof, Tof& frontTopTof, Tof& rightTof, ColorSensor& grabberSensor, ColorSensor& boxColorSensor, OLED& oled) :
+Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof& leftTof, Tof& leftTof2, Tof& frontTopTof, Tof& rightTof, ColorSensor& grabberSensor, ColorSensor& boxColorSensor, OLED& oled) :
     MotorR(Motor_R),
     MotorL(Motor_L),
     ir(IR_Arr),
     frontTof(frontTof),
     leftTof(leftTof),
+    leftTof2(leftTof2),
     frontTopTof(frontTopTof),
     rightTof(rightTof),
     grabberSensor(grabberSensor),
@@ -15,7 +16,11 @@ Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof
 
     _straightLinePID(1.5,1,0,-0.25),
     _lineFollowerPID(0.02,0,0,1400),
-    _wallFollowerPID(0.25,0.1,0,90)
+    // _singleWallFollowerPID(2,0.15,0,0),
+    // _singleWallDistancePID(0.5,0,0.05,100),
+    _singleWallFollowerPID(2,0.15,0,0),
+    _singleWallDistancePID(0.75,0,0.1,100),
+    _doubleWallFollowerPID(0.25,0.1,0,90)
 
 {
     _ticksPerDegree = (double)_ticksPer360 / 360;
@@ -96,9 +101,20 @@ void Robot::followLine(){
     MotorL.setSpeed(_speed + correction);
 }
 
-void Robot::followWall(){
+void Robot::followSingleWall(){
+    int tof = leftTof.readRange();
+    int tof2 = leftTof2.readRange();
+    int error = tof - tof2;
+    int lineCorrection = (int)_singleWallFollowerPID.compute((float)error);
+    // int distanceCorrection = (int)_singleWallDistancePID.compute((float)min(tof, tof2));
+    int distanceCorrection = 0;
+    MotorR.setSpeed(_speed + lineCorrection + distanceCorrection);
+    MotorL.setSpeed(_speed - lineCorrection - distanceCorrection);
+}
+
+void Robot::followDoubleWall(){
     int error = leftTof.readRange();
-    int correction = (int)_wallFollowerPID.compute((float)error);
+    int correction = (int)_doubleWallFollowerPID.compute((float)error);
     MotorR.setSpeed(_speed - correction);
     MotorL.setSpeed(_speed + correction);
 }
@@ -151,8 +167,11 @@ void Robot::setLineFollowerPID(float kp, float ki, float kd) {
     _lineFollowerPID.updatePID(kp, ki, kd);
 }
 
-void Robot::setWallFollowerPID(float kp, float ki, float kd) {
-    _wallFollowerPID.updatePID(kp, ki, kd);
+void Robot::setSingleWallFollowerPID(float kp, float ki, float kd) {
+    _singleWallFollowerPID.updatePID(kp, ki, kd);
+}
+void Robot::setDoubleWallFollowerPID(float kp, float ki, float kd) {
+    _singleWallFollowerPID.updatePID(kp, ki, kd);
 }
 
 void Robot::setStraightLinePID(float kp, float ki, float kd) {
