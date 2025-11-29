@@ -195,3 +195,16 @@ void Robot::setDoubleWallFollowerPID(float kp, float ki, float kd) {
 void Robot::setStraightLinePID(float kp, float ki, float kd) {
     _straightLinePID.updatePID(kp, ki, kd);
 }
+
+bool Robot::detectLeftBox(){
+    return leftTof.readRange()<150;
+}
+bool Robot::detectRightBox(){
+    return rightTof.readRange()<150;
+}
+bool Robot::detectFrontBox(){
+    return frontTof.readRange()<200;
+}
+bool Robot::detectObstacle(){
+    return frontTof.readRange()<200 && frontTopTof.readRange()<200;
+}

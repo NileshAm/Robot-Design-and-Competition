@@ -100,16 +100,86 @@ void MenuSystem::calibrateIR() {
     _oled.display();
     delay(1500);
 }
+void MenuSystem::singleWallFollow() {
+    _oled.clear();
+    _oled.displayCenteredText("Single wall follow...", 1);
+    _oled.display();
+
+    while (true)
+    {
+        _robot.followSingleWall();
+    }
+    _oled.clear();
+    _oled.displayCenteredText("Task Done", 1);
+    _oled.display();
+    delay(1500);
+}
+void MenuSystem::test() {
+    _oled.clear();
+    _oled.displayCenteredText("Test running", 1);
+    _oled.display();
+
+    while (true)
+    {
+
+        Serial.print(_robot.junction.isAllBlack());
+        Serial.print("\t");
+        Serial.print(_robot.junction.isAllWhite());
+        Serial.print("\t");
+        Serial.print(_robot.junction.isLeftTurn());
+        Serial.print("\t");
+        Serial.print(_robot.junction.isRightTurn());
+        Serial.print("\t");
+        Serial.print(_robot.junction.isLine());
+        Serial.print("\t");
+        Serial.print(_robot.junction.isTurn());
+
+
+        Serial.println();
+        delay(100);
+        _oled.clear();
+        _oled.displayText("Black", 0, 0, 1);
+        _oled.displayText("white", 30, 0, 1);
+        _oled.displayText("left", 60, 0, 1);
+        _oled.displayText("right", 90, 0, 1);
+        _oled.displayText("line", 120, 0, 1);
+        _oled.displayText("turn", 150, 0, 1);
+
+        _oled.displayText((String)_robot.junction.isAllBlack(), 0, 30, 1);
+        _oled.displayText((String)_robot.junction.isAllWhite(), 10, 30, 1);
+        _oled.displayText((String)_robot.junction.isLeftTurn(), 20, 30, 1);
+        _oled.displayText((String)_robot.junction.isRightTurn(), 30, 30, 1);
+        _oled.displayText((String)_robot.junction.isLine(), 40, 30, 1);
+        _oled.displayText((String)_robot.junction.isTurn(), 50, 30, 1);
+    }
+}
 void MenuSystem::ramp() {
     _oled.clear();
     _oled.displayCenteredText("Ramp running", 1);
     _oled.display();
 
-    while (true)
+    while (_robot.junction.isAllBlack())
     {
         _robot.followRamp();
     }
+    _robot.stop();
 }
+void MenuSystem::objectDetect() {
+    _oled.clear();
+    _oled.displayCenteredText("Object detection running", 1);
+    _oled.display();
+
+    while (true)
+    {
+        _oled.clear();
+        _oled.displayText("Front: " + String(_robot.detectFrontBox()), 0, 0, 1);
+        _oled.displayText("Left: " + String(_robot.detectLeftBox()), 0, 10, 1);
+        _oled.displayText("Right: " + String(_robot.detectRightBox()), 0, 20, 1);
+        _oled.displayText("Obstacle: " + String(_robot.detectObstacle()), 0, 30, 1);
+        delay(100);
+    }
+}
+
 // FIX: Make the values scroll down
 void MenuSystem::debugTOF() {
     _oled.clear();
@@ -194,10 +264,9 @@ void MenuSystem::update() {
     if (_btnSelect.stateChanged() == 1) {
 
         switch (currentIndex) {
-
         case 0:
             // calibrateIR();
-            ramp();
+            test();
             break;
 
         case 1:
@@ -205,19 +274,19 @@ void MenuSystem::update() {
             break;
 
         case 2:
-            runTask("Task 2", nullptr /* Task2::run */);
-            break;
-
+            calibrateIR();
+        break;
+        
         case 3:
-            runTask("Task 3", nullptr);
-            break;
-
+            ramp();
+        break;
+        
         case 4:
-            runTask("Task 4", nullptr);
+            singleWallFollow();
             break;
 
         case 5:
-            runTask("Task 5", nullptr);
+            objectDetect();
             break;
 
         case 6:

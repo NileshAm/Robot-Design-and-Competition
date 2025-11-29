@@ -38,15 +38,15 @@ private:
     // Menu items
     static const int menuCount = 9;
     String menuItems[menuCount] = {
-        "Ramp",
-        "Calibrate Color",
+        "Test",
         "Line Follow",
-        "Run Task 3",
-        "Run Task 4",
-        "Run Task 5",
-        "Run Task 6",
+        "Calibrate IR",
+        "Ramp",
+        "single Wall Follow",
+        "Object detect",
         "Run All",
         "TOF Debug",
+        "IR Debug",
     };
 
     int currentIndex = 0;   // Selected entry
@@ -55,7 +55,10 @@ private:
     void drawMenu();
     void updatePage();
 
+    void test();
     void calibrateIR();
+    void singleWallFollow();
+    void objectDetect();
     void ramp();
     void debugTOF();
     void debugIR();

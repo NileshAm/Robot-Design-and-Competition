@@ -62,6 +62,12 @@ class Robot {
 
         void calibrateIR();
 
+        bool detectLeftBox();
+        bool detectRightBox();
+        bool detectFrontBox();
+
+        bool detectObstacle();
+
         void setInterruptButton(pushbutton& btn);
         bool isInterrupted();
         void setLineFollowerPID(float kp, float ki, float kd);

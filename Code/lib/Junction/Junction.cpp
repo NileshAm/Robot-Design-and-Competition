@@ -31,14 +31,14 @@ bool Junction::isAllBlack(){
     bool out[8];
     _ir.digitalRead(out);
     
-    return pack8(out) == 0b11111111;
+    return pack8(out) == 0b00000000;
 }
 
 bool Junction::isAllWhite(){
     bool out[8];
     _ir.digitalRead(out);
     
-    return pack8(out) == 0b00000000;
+    return pack8(out) == 0b11111111;
 }
 bool Junction::isLine(){
     bool out[8];
@@ -46,5 +46,5 @@ bool Junction::isLine(){
 
     int c = 0;
     for (bool v : out) c += v;
-    return c == 2;
+    return c == 2 || c==3 || c==4;
 }
