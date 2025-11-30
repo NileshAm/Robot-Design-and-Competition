@@ -18,4 +18,3 @@ private:
     float _lastReading;
     float _deadband = 0.05; // ignore noise below 50 mA
 };
-

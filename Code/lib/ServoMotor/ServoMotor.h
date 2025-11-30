@@ -9,7 +9,7 @@ public:
     ServoMotor(uint8_t pin, int minUs = 500, int maxUs = 2500, bool continuous = false);
 
     // Positional: start = start angle (°). Continuous: start = % speed (-100..100), 0 = stop
-    void init(int start = 90);
+    void init(int start = 0);
 
     // ---- Control ----
     void writeAngle(float deg);                 // 0..180° (positional only)

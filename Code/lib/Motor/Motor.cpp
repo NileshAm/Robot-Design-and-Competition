@@ -63,7 +63,12 @@ void Motor::init()
     _lastMs = millis();
     _lastTicks = 0;
 }
-
+void Motor::brake()
+{
+    analogWrite(_pwm, 0);
+    digitalWrite(_dir1, HIGH);
+    digitalWrite(_dir2, HIGH);
+}
 void Motor::setSpeed(float pct)
 {
     pct = constrain(pct, -100, 100);
