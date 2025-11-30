@@ -14,9 +14,11 @@ Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof
     junction(IR_Arr),
     oled(oled),
 
-    _straightLinePID(1.5,1,0,-0.25),
+    _straightLinePID(3.5,0,-0.04375,0),
     _rampPID(1,0,0,0),
-    _lineFollowerPID(0.02,0,0,1400),
+    // _lineFollowerPID(0.02,0,-0.6,1400),      40% pwm
+    // _lineFollowerPID(0.012,0.004,-0.025,1400),
+    _lineFollowerPID(0.03,0,-0.0001,900),
     // _singleWallFollowerPID(2,0.15,0,0),
     // _singleWallDistancePID(0.5,0,0.05,100),
     _singleWallFollowerPID(2,0.15,0,0),
@@ -30,6 +32,10 @@ Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof
 void Robot::stop(){
     MotorL.setSpeed(0);
     MotorR.setSpeed(0);
+}
+void Robot::brake(){
+    MotorL.brake();
+    MotorR.brake();
 }
 
 void Robot::turn90() {
@@ -111,12 +117,14 @@ void Robot::moveStraight() {
     moveStraight(_speed);
 }
 
-void Robot::followLine(){
+void Robot::followLine(int speed){
     int error = ir.weightedSum();
     int correction = (int)_lineFollowerPID.compute((float)error);
-
-    MotorR.setSpeed(_speed - correction);
-    MotorL.setSpeed(_speed + correction);
+    // Serial.print(error);
+    // Serial.print(",");
+    // Serial.println(correction);
+    MotorR.setSpeed(speed - correction);
+    MotorL.setSpeed(speed + correction);
 }
 
 void Robot::followSingleWall(){
@@ -207,4 +215,32 @@ bool Robot::detectFrontBox(){
 }
 bool Robot::detectObstacle(){
     return frontTof.readRange()<200 && frontTopTof.readRange()<200;
+}
+
+void Robot::IRDebug() {
+    bool dig[8];
+    ir.digitalRead(dig);
+    for (int i = 0; i < 8; i++){
+        Serial.print(dig[i]);
+        Serial.print(",");
+    }
+    Serial.println();
+}
+
+void Robot::goCell() {
+    oled.clear();
+    oled.displayText((String)junction.isLine(), 0, 0, 1);
+    
+    while (junction.isLine())
+    {
+        followLine(20);
+    }
+    oled.clear();
+    oled.displayText((String)!junction.isLine(), 0, 0, 1);
+    while (!junction.isLine())
+    {
+        moveStraight(10);
+    }
+    
+    
 }

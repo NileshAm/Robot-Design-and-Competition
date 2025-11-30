@@ -10,6 +10,7 @@ public:
         uint8_t encA, uint8_t encB, uint16_t ticksPerRev = 600, float wheelDiameter = 6.3);
 
   void init();                 // sets pinModes, checks/attaches interrupt
+  void brake();
   void setSpeed(float pct);   // -100..100 (negative = reverse)
   long getTicks();             // thread-safe read
   float getWheelDiameter();

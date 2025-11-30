@@ -52,7 +52,8 @@ void setup()
     oled.displayText("TOF init complete...", 0, 30, 1);    
     
     ColorSensor grabberSensor(11,12, 13, 14, 15);
-    ColorSensor boxColorSensor(16, 17, 18, 19, 20);
+    ColorSensor boxColorSensor(35, 37, 31, 33, 29);
+    boxColorSensor.begin();
     oled.displayText("Color init complete...", 0, 40, 1);    
     
     pushbutton btnUp(50);

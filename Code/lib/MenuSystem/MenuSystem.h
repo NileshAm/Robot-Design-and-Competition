@@ -36,15 +36,18 @@ private:
     static const int itemsPerPage = 5;
 
     // Menu items
-    static const int menuCount = 9;
+    static const int menuCount = 12;
     String menuItems[menuCount] = {
         "Test",
         "Line Follow",
+        "Straight Line",
         "Calibrate IR",
         "Ramp",
         "single Wall Follow",
         "Object detect",
-        "Run All",
+        "Detect color",
+        "Grid run",
+        "Run all",
         "TOF Debug",
         "IR Debug",
     };
@@ -60,8 +63,11 @@ private:
     void singleWallFollow();
     void objectDetect();
     void ramp();
+    void detectColor();
     void debugTOF();
     void debugIR();
     void lineFollow();
+    void straightLine();
+    void gridRun();
     void runTask(const String &name, void (*fn)(Robot&));
 };

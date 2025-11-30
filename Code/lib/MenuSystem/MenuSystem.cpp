@@ -87,6 +87,7 @@ void MenuSystem::lineFollow() {
     _oled.display();
     delay(1500);
 }
+
 void MenuSystem::calibrateIR() {
     _oled.clear();
     _oled.displayCenteredText("Calibrating...", 1);
@@ -116,42 +117,37 @@ void MenuSystem::singleWallFollow() {
 }
 void MenuSystem::test() {
     _oled.clear();
-    _oled.displayCenteredText("Test running", 1);
-    _oled.display();
-
+    _oled.displayCenteredText("Testing...", 1);
     while (true)
     {
+        // _robot.IRDebug();
+        
+        // Serial.print(_robot.junction.isLine());
+        // Serial.print(",");
+        // Serial.print(_robot.junction.isAllWhite());
+        // Serial.print(",");
+        // Serial.print(_robot.junction.isAllBlack());
+        // Serial.print(",");
+        // Serial.print(_robot.junction.isRightTurn());
+        // Serial.print(",");
+        // Serial.print(_robot.junction.isLeftTurn());
+        // Serial.println(",");
 
-        Serial.print(_robot.junction.isAllBlack());
-        Serial.print("\t");
-        Serial.print(_robot.junction.isAllWhite());
-        Serial.print("\t");
-        Serial.print(_robot.junction.isLeftTurn());
-        Serial.print("\t");
-        Serial.print(_robot.junction.isRightTurn());
-        Serial.print("\t");
-        Serial.print(_robot.junction.isLine());
-        Serial.print("\t");
-        Serial.print(_robot.junction.isTurn());
+        // Serial.print(_robot.MotorL.getTicks());
+        // Serial.print(",");
+        // Serial.print(_robot.MotorR.getTicks());
+        // Serial.println(",");
 
-
+        double dig[8];
+        _robot.ir.readNormalized(dig);
+        for (int i = 0; i < 8; i++){
+            Serial.print(dig[i]);
+            Serial.print(",");
+        }
         Serial.println();
         delay(100);
-        _oled.clear();
-        _oled.displayText("Black", 0, 0, 1);
-        _oled.displayText("white", 30, 0, 1);
-        _oled.displayText("left", 60, 0, 1);
-        _oled.displayText("right", 90, 0, 1);
-        _oled.displayText("line", 120, 0, 1);
-        _oled.displayText("turn", 150, 0, 1);
-
-        _oled.displayText((String)_robot.junction.isAllBlack(), 0, 30, 1);
-        _oled.displayText((String)_robot.junction.isAllWhite(), 10, 30, 1);
-        _oled.displayText((String)_robot.junction.isLeftTurn(), 20, 30, 1);
-        _oled.displayText((String)_robot.junction.isRightTurn(), 30, 30, 1);
-        _oled.displayText((String)_robot.junction.isLine(), 40, 30, 1);
-        _oled.displayText((String)_robot.junction.isTurn(), 50, 30, 1);
     }
+    
 }
 void MenuSystem::ramp() {
     _oled.clear();
@@ -180,63 +176,161 @@ void MenuSystem::objectDetect() {
     }
 }
 
-// FIX: Make the values scroll down
-void MenuSystem::debugTOF() {
+void MenuSystem::detectColor() {
     _oled.clear();
-    _oled.displayText("Front", 0, 0, 1);
-    _oled.displayText("Top", 30, 0, 1);
-    _oled.displayText("left", 60, 0, 1);
-    _oled.displayText("left2", 90, 0, 1);
-    _oled.displayText("right", 120, 0, 1);
-    int id =1;
+    _oled.displayText("White", 0, 0, 1);
+    delay(2000);
+    _robot.boxColorSensor.calibrate(100);
+    _oled.clear();
+    _oled.displayText("Black", 0, 0, 1);
+    delay(2000);
+    _robot.boxColorSensor.calibrate(100, false);
+    _oled.clear();
+    _oled.displayCenteredText("Color detection running", 1);
+    _oled.display();
+
     while (true)
     {
-        if(id >= 5){
+        _oled.clear();
+        switch (_robot.boxColorSensor.getColor()) {
+        case COLOR_RED:   
             _oled.clear();
-            _oled.displayText("Front", 0, 0, 1);
-            _oled.displayText("Top", 30, 0, 1);
-            _oled.displayText("left", 60, 0, 1);
-            _oled.displayText("left2", 90, 0, 1);
-            _oled.displayText("right", 120, 0, 1);
-            id = 1;
-        }
-        else{
-            _oled.displayText((String)_robot.frontTof.readRange(), 0, id*10, 1);
-            _oled.displayText((String)_robot.frontTopTof.readRange(), 30, id*10, 1);
-            _oled.displayText((String)_robot.leftTof.readRange(), 60, id*10, 1);
-            _oled.displayText((String)_robot.leftTof2.readRange(), 90, id*10, 1);
-            _oled.displayText((String)_robot.rightTof.readRange(), 120, id*10, 1);
-        }
+            Serial.println("RED");
+            _oled.displayText("RED");
+            _oled.display(); 
+            break;
+        case COLOR_GREEN: 
+            _oled.clear();
+            Serial.println("GREEN"); 
+            _oled.displayText("GREEN");
+            _oled.display();
+            break;
+        case COLOR_BLUE:  
+            _oled.clear();
+            Serial.println("BLUE"); 
+            _oled.displayText("BLUE");
+            _oled.display();
+            break;
+        case COLOR_BLACK: 
+            _oled.clear();
+            Serial.println("BLACK");
+            _oled.displayText("BLACK");
+            _oled.display(); 
+            break;
+        case COLOR_WHITE: 
+            _oled.clear();
+            Serial.println("WHITE");
+            _oled.displayText("WHITE");
+            _oled.display();
+            break;
+        default:          
+            _oled.clear();
+            Serial.println("UNKNOWN");
+            _oled.displayText("UNKOWN");
+            _oled.display(); 
+            break;
+    }
+        delay(100);
+    }
+}
+
+// FIX: Make the values scroll down
+void MenuSystem::debugTOF() {
+    while (true)
+    {
+        _oled.clear();
+        _oled.displayText("Front", 0, 0, 1);
+        _oled.displayText("Top", 30, 0, 1);
+        _oled.displayText("left", 60, 0, 1);
+        _oled.displayText("left2", 90, 0, 1);
+        _oled.displayText("right", 120, 0, 1);
+
+        _oled.displayText((String)_robot.frontTof.readRange(), 0, 0, 1);
+        _oled.displayText((String)_robot.frontTopTof.readRange(), 30, 0, 1);
+        _oled.displayText(((String)_robot.leftTof.readRange()), 60, 0, 1);
+        _oled.displayText((String)_robot.leftTof2.readRange(), 90, 0, 1);
+        _oled.displayText((String)_robot.rightTof.readRange(), 120, 0, 1);
+        
         delay(100);
     }
 }
 // FIX: Make the values scroll down
 void MenuSystem::debugIR() {
-    _oled.clear();
-    int id =1;
     while (true)
     {
-        if(id >= 5){
-            _oled.clear();
-            bool dig[8];
-            _robot.ir.digitalRead(dig);
-
-            for (int i = 0; i < 8; i++){
-                _oled.displayText((String)dig[i], i * 10, id * 10, 1);
-            }
-            
-            id = 1;
-        }
-        else{
-            bool dig[8];
-            _robot.ir.digitalRead(dig);
-    
-            for (int i = 0; i < 8; i++){
-                _oled.displayText((String)dig[i], i * 10, id * 10, 1);
-            }
+        _oled.clear();
+        bool dig[8];
+        _robot.ir.digitalRead(dig);
+        for (int i = 0; i < 8; i++){
+            _oled.displayText((String)dig[i], i*10, 10, 1);
         }
         delay(100);
     }
+}
+
+void MenuSystem::straightLine() {
+    
+    while (true)
+    {
+        // _oled.clear();
+        // _oled.displayText((String)_robot.MotorR.getTicks(), 0, 0, 1);
+        // _oled.displayText((String)_robot.MotorL.getTicks(), 10, 0, 1);
+        _robot.moveStraight();
+    }
+
+}
+
+void MenuSystem::gridRun() {
+    _oled.clear();
+    _oled.displayText("Grid run...", 0, 0, 1);
+    delay(1000);
+    
+    while (true)
+    {
+        _robot.goCell();
+        
+    }
+    
+    // int8_t count = 0;
+    // bool Triggered = false;
+    // while (count < 9)
+    // {
+    //     if(!_robot.junction.isLine()){
+    //         if (!Triggered){
+    //             count++;
+    //             Triggered = true;
+    //         }
+    //         _robot.moveStraight(20);
+    //     }else{
+    //         Triggered = false;
+    //         _robot.followLine(20);
+
+    //     }
+    // }
+    // _robot.turn90();
+    // while (count < 2)
+    // {
+    //     if(_robot.junction.isAllWhite()){
+    //         if (!Triggered){
+    //             count++;
+    //             // _oled.clear();
+    //             // _oled.displayText("count: " + String(count), 0, 10, 1);
+    //             Triggered = true;
+    //         }
+    //         _robot.moveStraight(10);
+    //     }else{
+    //         Triggered = false;
+    //         _robot.followLine(20);
+
+    //     }
+    // }
+
+    _robot.brake();
+
+    _oled.clear();
+    _oled.displayCenteredText("Task Done", 1);
+    _oled.display();
+    delay(1500);
 }
 
 // -------------------------------
@@ -272,34 +366,41 @@ void MenuSystem::update() {
         case 1:
             lineFollow();
             break;
-
         case 2:
+            straightLine();
+            break;
+
+        case 3:
             calibrateIR();
         break;
         
-        case 3:
+        case 4:
             ramp();
         break;
         
-        case 4:
+        case 5:
             singleWallFollow();
             break;
 
-        case 5:
+        case 6:
             objectDetect();
             break;
 
-        case 6:
-            runTask("Task 6", nullptr);
+        case 7:
+            detectColor();
             break;
 
-        case 7:
+        case 8:
+            gridRun();
+            break;
+
+        case 9:
             runTask("All Tasks", nullptr);
             break;
-        case 8:
+        case 10:
             debugTOF();
             break;
-        case 9:
+        case 11:
             debugIR();
             break;
         }

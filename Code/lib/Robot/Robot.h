@@ -31,7 +31,7 @@ class Robot {
         void moveStraight();
         void moveStraight(float speed);
         void followRamp(float speed = -20);
-        void followLine();
+        void followLine(int speed=40);
         void followSingleWall();
         void followDoubleWall();
 
@@ -56,9 +56,11 @@ class Robot {
         void turn(int angle);                                              // normal
         void turn(int angle, uint16_t cbEveryMs, TurnCallback cb);         // with callback
         void stop();
+        void brake();
 
         void goTillTicks(long targetTicks);
         void goTillCM(float cm);
+        void goCell();
 
         void calibrateIR();
 
@@ -75,6 +77,8 @@ class Robot {
         void setSingleWallDistancePID(float kp, float ki, float kd);
         void setDoubleWallFollowerPID(float kp, float ki, float kd);
         void setStraightLinePID(float kp, float ki, float kd);
+
+        void IRDebug();
 
     private:
         pushbutton* _interruptButton = nullptr;
