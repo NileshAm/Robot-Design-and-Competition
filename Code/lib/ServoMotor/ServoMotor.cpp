@@ -4,7 +4,7 @@ ServoMotor::ServoMotor(uint8_t pin, int minUs, int maxUs, bool continuous)
 : _pin(pin), _minUs(minUs), _maxUs(maxUs), _continuous(continuous) {}
 
 void ServoMotor::attach() {
-    if (!_srv.attached()) _srv.attach(_pin, _minUs, _maxUs);
+    if (!_servo.attached()) _servo.attach(_pin, _minUs, _maxUs);
 }
 
 void ServoMotor::init(int start) {
@@ -14,19 +14,20 @@ void ServoMotor::init(int start) {
     } else {
         writeAngle((float)start);    // angle °
     }
+    delay(400);
 }
 
 void ServoMotor::_applyPulse(int us) {
     if (us < _minUs) us = _minUs;
     if (us > _maxUs) us = _maxUs;
-    _srv.writeMicroseconds(us);
+    _servo.writeMicroseconds(us);
     _lastUs = us;
 }
 
 void ServoMotor::_applyAngle(float deg) {
     if (deg < 0.0f) deg = 0.0f;
     if (deg > 180.0f) deg = 180.0f;
-    _srv.write((int)deg);
+    _servo.write((int)deg);
     _angle = deg;
     // approximate pulse for bookkeeping (optional)
     long us = map((long)deg, 0, 180, _minUs, _maxUs);
@@ -57,3 +58,17 @@ void ServoMotor::setPercent(int8_t percent) {
 void ServoMotor::writeMicroseconds(int us) {
     _applyPulse(us);
 }
+
+void ServoMotor::moveSmooth(int start, int end, int step, int d){
+        if (start < end) {
+            for (int a = start; a <= end; a += step) {
+                writeAngle(a);
+                delay(d);
+            }
+        } else {
+            for (int a = start; a >= end; a -= step) {
+                writeAngle(a);
+                delay(d);
+            }
+        }
+    }

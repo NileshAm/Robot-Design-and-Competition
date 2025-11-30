@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <ServoMotor.h>
 
-ServoMotor arm(11 /*pin*/, 1000, 2000, false);  // positional
+ServoMotor arm(A0 /*pin*/, 1000, 2000, false);  // positional
 
 void setup() {
   Serial.begin(115200);

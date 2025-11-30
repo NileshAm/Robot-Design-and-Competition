@@ -6,7 +6,7 @@ class ServoMotor {
 public:
     // If continuous = false -> positional servo (0..180°)
     // If continuous = true  -> continuous servo (speed via percent, 1500us stop)
-    ServoMotor(uint8_t pin, int minUs = 1000, int maxUs = 2000, bool continuous = false);
+    ServoMotor(uint8_t pin, int minUs = 500, int maxUs = 2500, bool continuous = false);
 
     // Positional: start = start angle (°). Continuous: start = % speed (-100..100), 0 = stop
     void init(int start = 90);
@@ -20,12 +20,14 @@ public:
     float getAngle() const            { return _angle; }   // last angle commanded
     int   getPulseUs() const          { return _lastUs; }  // last pulse us
 
+    void moveSmooth(int start, int end, int step, int d = 50);
+
     // ---- Lifecycle ----
     void attach();                                     // re-attach using stored params
-    void detach()                { _srv.detach(); }
+    void detach()                { _servo.detach(); }
 
 private:
-    Servo   _srv;
+    Servo   _servo;
     uint8_t _pin;
     int     _minUs, _maxUs;
     bool    _continuous;
