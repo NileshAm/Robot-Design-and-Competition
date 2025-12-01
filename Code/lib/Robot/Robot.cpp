@@ -227,7 +227,7 @@ void Robot::IRDebug() {
     Serial.println();
 }
 
-void Robot::goCell() {
+void Robot::goCell() {//one junction to nextjunction
     oled.clear();
     oled.displayText((String)junction.isLine(), 0, 0, 1);
     
