@@ -54,8 +54,8 @@ void setup()
     frontTopTof.init(29);
     oled.displayText("TOF init complete...", 0, 30, 1);    
     
-    ColorSensor grabberSensor(11,12, 13, 14, 15);
-    ColorSensor boxColorSensor(35, 37, 31, 33, 29);
+    ColorSensor grabberSensor(11,12, 13, 14, 15, -1); // TODO: Update OE Pin
+    ColorSensor boxColorSensor(35, 37, 31, 33, 29, -1); // TODO: Update OE Pin
     boxColorSensor.begin();
     oled.displayText("Color init complete...", 0, 40, 1);    
     

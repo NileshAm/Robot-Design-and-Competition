@@ -2,8 +2,8 @@
 #include "ColorSensor.h"
 #define EEPROM_COLOR_START_ADDR 300
 
-ColorSensor::ColorSensor(uint8_t s0Pin, uint8_t s1Pin, uint8_t s2Pin, uint8_t s3Pin, uint8_t outPin)
-: _s0(s0Pin), _s1(s1Pin), _s2(s2Pin), _s3(s3Pin), _out(outPin),
+ColorSensor::ColorSensor(uint8_t s0Pin, uint8_t s1Pin, uint8_t s2Pin, uint8_t s3Pin, uint8_t outPin, uint8_t oePin)
+: _s0(s0Pin), _s1(s1Pin), _s2(s2Pin), _s3(s3Pin), _out(outPin), _oe(oePin),
   _rMin(UINT32_MAX), _gMin(UINT32_MAX), _bMin(UINT32_MAX),
   _rMax(0), _gMax(0), _bMax(0),
   _rSmooth(0), _gSmooth(0), _bSmooth(0),
@@ -14,7 +14,10 @@ void ColorSensor::begin() {
   pinMode(_s1, OUTPUT);
   pinMode(_s2, OUTPUT);
   pinMode(_s3, OUTPUT);
+  pinMode(_s3, OUTPUT);
   pinMode(_out, INPUT);
+  pinMode(_oe, OUTPUT);
+  digitalWrite(_oe, HIGH); // Disable by default
   // Set default scaling to 20% (recommended for Arduino). If you want other scaling, call setScaling().
   digitalWrite(_s0, HIGH);
   digitalWrite(_s1, LOW);
@@ -44,10 +47,17 @@ uint32_t ColorSensor::_readChannel(bool c2, bool c3) {
 }
 
 void ColorSensor::readRaw(uint32_t &r, uint32_t &g, uint32_t &b) {
+  // Enable Output
+  digitalWrite(_oe, LOW);
+  delayMicroseconds(100); // Allow stabilization
+
   // S2/S3 selection: (LL=RED, HH=GREEN, LH=BLUE) — common wiring for TCS modules
   r = _readChannel(LOW, LOW);   // red
   g = _readChannel(HIGH, HIGH); // green
   b = _readChannel(LOW, HIGH);  // blue
+  
+  // Disable Output
+  digitalWrite(_oe, HIGH);
 }
 
 void ColorSensor::calibrate(uint16_t samples, bool reset) {

@@ -8,7 +8,7 @@ enum ColorName { COLOR_UNKNOWN=0, COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_BLAC
 
 class ColorSensor {
 public:
-  ColorSensor(uint8_t s0Pin, uint8_t s1Pin, uint8_t s2Pin, uint8_t s3Pin, uint8_t outPin);
+  ColorSensor(uint8_t s0Pin, uint8_t s1Pin, uint8_t s2Pin, uint8_t s3Pin, uint8_t outPin, uint8_t oePin);
   void begin(); // sets pins (default: 20% scaling)
   void setScaling(bool s0, bool s1); // manual control if needed
   void readRaw(uint32_t &r, uint32_t &g, uint32_t &b); // raw period (microseconds)
@@ -19,7 +19,7 @@ public:
   void loadCalibration();
 
 private:
-  uint8_t _s0,_s1,_s2,_s3,_out;
+  uint8_t _s0,_s1,_s2,_s3,_out,_oe;
   uint32_t _rMin,_gMin,_bMin, _rMax,_gMax,_bMax;
   float _rSmooth,_gSmooth,_bSmooth;
   ColorName _lastColor;
