@@ -1,6 +1,6 @@
 #include "Robot.h"
 
-Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof& leftTof, Tof& leftTof2, Tof& frontTopTof, Tof& rightTof, ColorSensor& grabberSensor, ColorSensor& boxColorSensor, OLED& oled) :
+Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof& leftTof, Tof& leftTof2, Tof& frontTopTof, Tof& rightTof, ColorSensor& grabberSensor, ColorSensor& boxColorSensor, Grabber& grabber, OLED& oled) :
     MotorR(Motor_R),
     MotorL(Motor_L),
     ir(IR_Arr),
@@ -11,6 +11,7 @@ Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof
     rightTof(rightTof),
     grabberSensor(grabberSensor),
     boxColorSensor(boxColorSensor),
+    grabber(grabber),
     junction(IR_Arr),
     oled(oled),
 

@@ -8,12 +8,13 @@
 #include <ColorSensor.h>
 #include <OLED.h>
 #include <pushbutton.h>
+#include <Grabber.h>
 
 class Robot {
     public:
         using TurnCallback = void (*)(Robot*);   // non-capturing lambda or plain function
 
-        Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof& leftTof, Tof& leftTof2, Tof& frontTopTof, Tof& rightTof, ColorSensor& grabberSensor, ColorSensor& boxColorSensor, OLED& oled);
+        Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof& leftTof, Tof& leftTof2, Tof& frontTopTof, Tof& rightTof, ColorSensor& grabberSensor, ColorSensor& boxColorSensor, Grabber& grabber, OLED& oled);
 
         Motor& MotorR;        // dir1, dir2, pwm, encA, encB, ticks/rev
         Motor& MotorL;        // dir1, dir2, pwm, encA, encB, ticks/rev
@@ -25,6 +26,7 @@ class Robot {
         Tof& rightTof;      // xshut, address, sda, scl //act as the right tof also
         ColorSensor& grabberSensor;
         ColorSensor& boxColorSensor;
+        Grabber& grabber;
         Junction junction;
         OLED& oled;
 

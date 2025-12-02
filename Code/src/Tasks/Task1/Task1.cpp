@@ -438,13 +438,8 @@ namespace Task1
 
     void run(Robot& robot)
     {
-        // --- Local Grabber Initialization ---
-        // TODO: UPDATE PINS
-        ServoMotor grabServo(-1); 
-        ServoMotor liftServo(-1);
-        CurrentSensor currentSensor(-1); 
-        Grabber grabber(grabServo, liftServo, currentSensor);
-        grabber.init();
+        // --- Grabber is now part of Robot ---
+        // robot.grabber.init(); // Already initialized in main
         
         // Initialize State
         init_map();
@@ -477,8 +472,8 @@ namespace Task1
                         
                         if (type != TYPE_OBSTACLE) {
                             robot.oled.displayText("Grabbing...", 0, 10, 1);
-                            grabber.grab();
-                            grabber.lift();
+                            robot.grabber.grab();
+                            robot.grabber.lift();
                             carrying = type;
                             grid[x][y] = TYPE_NONE; // Picked up
                         } else {
@@ -492,8 +487,8 @@ namespace Task1
                         
                     } else if (collection_phase == PHASE_MOVING_TO_DROP) {
                          robot.oled.displayText("Dropping...", 0, 10, 1);
-                         grabber.release();
-                         grabber.reset();
+                         robot.grabber.release();
+                         robot.grabber.reset();
                          carrying = TYPE_NONE;
                          collection_phase = PHASE_IDLE;
                     }
