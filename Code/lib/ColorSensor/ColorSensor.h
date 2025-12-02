@@ -2,6 +2,7 @@
 #ifndef COLORSENSOR_H
 #define COLORSENSOR_H
 #include <Arduino.h>
+#include <EEPROM.h>
 
 enum ColorName { COLOR_UNKNOWN=0, COLOR_RED, COLOR_GREEN, COLOR_BLUE, COLOR_BLACK, COLOR_WHITE };
 
@@ -13,6 +14,9 @@ public:
   void readRaw(uint32_t &r, uint32_t &g, uint32_t &b); // raw period (microseconds)
   void calibrate(uint16_t samples, bool reset = true); // reset=false keeps previous min/max
   ColorName getColor(); // returns stable color or COLOR_UNKNOWN until stable
+
+  void saveCalibration();
+  void loadCalibration();
 
 private:
   uint8_t _s0,_s1,_s2,_s3,_out;

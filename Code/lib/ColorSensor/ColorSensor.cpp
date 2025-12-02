@@ -1,5 +1,6 @@
 // ColorSensor.cpp
 #include "ColorSensor.h"
+#define EEPROM_COLOR_START_ADDR 300
 
 ColorSensor::ColorSensor(uint8_t s0Pin, uint8_t s1Pin, uint8_t s2Pin, uint8_t s3Pin, uint8_t outPin)
 : _s0(s0Pin), _s1(s1Pin), _s2(s2Pin), _s3(s3Pin), _out(outPin),
@@ -17,6 +18,7 @@ void ColorSensor::begin() {
   // Set default scaling to 20% (recommended for Arduino). If you want other scaling, call setScaling().
   digitalWrite(_s0, HIGH);
   digitalWrite(_s1, LOW);
+  loadCalibration();
 }
 
 void ColorSensor::setScaling(bool s0, bool s1){
@@ -60,6 +62,7 @@ void ColorSensor::calibrate(uint16_t samples, bool reset) {
     _rMax = max(_rMax, r); _gMax = max(_gMax, g); _bMax = max(_bMax, b);
     delay(10); // small pause to let sensor settle; adjust as needed
   }
+  saveCalibration();
 }
 
 // normalize: returns 0..255 where 255 = highest intensity (inverted because lower period => higher light)
@@ -140,4 +143,29 @@ ColorName ColorSensor::getColor() {
 
   if (_stableCount >= 2) return candidate;
   return COLOR_UNKNOWN;
+}
+
+void ColorSensor::saveCalibration() {
+    EEPROM.put(EEPROM_COLOR_START_ADDR, _rMin);
+    EEPROM.put(EEPROM_COLOR_START_ADDR + 4, _gMin);
+    EEPROM.put(EEPROM_COLOR_START_ADDR + 8, _bMin);
+    EEPROM.put(EEPROM_COLOR_START_ADDR + 12, _rMax);
+    EEPROM.put(EEPROM_COLOR_START_ADDR + 16, _gMax);
+    EEPROM.put(EEPROM_COLOR_START_ADDR + 20, _bMax);
+}
+
+void ColorSensor::loadCalibration() {
+    uint32_t rMin, gMin, bMin, rMax, gMax, bMax;
+    EEPROM.get(EEPROM_COLOR_START_ADDR, rMin);
+    EEPROM.get(EEPROM_COLOR_START_ADDR + 4, gMin);
+    EEPROM.get(EEPROM_COLOR_START_ADDR + 8, bMin);
+    EEPROM.get(EEPROM_COLOR_START_ADDR + 12, rMax);
+    EEPROM.get(EEPROM_COLOR_START_ADDR + 16, gMax);
+    EEPROM.get(EEPROM_COLOR_START_ADDR + 20, bMax);
+
+    // Validate: Max should be greater than Min, and not default uninitialized values
+    if (rMax > rMin && gMax > gMin && bMax > bMin && rMin != UINT32_MAX) {
+        _rMin = rMin; _gMin = gMin; _bMin = bMin;
+        _rMax = rMax; _gMax = gMax; _bMax = bMax;
+    }
 }
