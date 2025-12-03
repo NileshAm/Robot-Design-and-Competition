@@ -183,14 +183,14 @@ void MenuSystem::test() {
         _oled.display();
         Serial.println("Place sensor on WHITE surface...");
         delay(3000); 
-        _robot.grabberSensor.calibrate(150, true); 
+        _robot.grabberSensor.scan(150, true); 
         _oled.clear();
 
         _oled.displayText("Place sensor on BLACK surface...");
         _oled.display();
         Serial.println("Place sensor on BLACK surface...");
         delay(3000);
-        _robot.grabberSensor.calibrate(150, false);
+        _robot.grabberSensor.scan(150, false);
         _oled.clear();
 
         _oled.displayText("Calibration complete!");
@@ -276,11 +276,11 @@ void MenuSystem::detectColor() {
     _oled.clear();
     _oled.displayText("White", 0, 0, 1);
     delay(2000);
-    _robot.boxColorSensor.scanSamples(100);
+    _robot.boxColorSensor.scan(100);
     _oled.clear();
     _oled.displayText("Black", 0, 0, 1);
     delay(2000);
-    _robot.boxColorSensor.scanSamples(100, false);
+    _robot.boxColorSensor.scan(100, false);
     _oled.clear();
     _oled.displayCenteredText("Color detection running", 1);
     _oled.display();
