@@ -165,7 +165,83 @@ void MenuSystem::test() {
         // Serial.println();
         // delay(100);
 
-        // _robot.
+        // while (true)
+        // {
+        //     if(_robot.grabber.grab()){
+        //         Serial.println("grab");
+        //         delay(2000);
+        //         _robot.grabber.liftBox();
+        //         delay(2000);
+        //         _robot.grabber.reset();
+        //         delay(2000);
+        //         // _robot.grabber.release();
+        //         // delay(2000);
+        //     }
+        //     _robot.grabber.release();
+        // }
+        _oled.displayText("Place sensor on WHITE surface...");
+        _oled.display();
+        Serial.println("Place sensor on WHITE surface...");
+        delay(3000); 
+        _robot.grabberSensor.calibrate(150, true); 
+        _oled.clear();
+
+        _oled.displayText("Place sensor on BLACK surface...");
+        _oled.display();
+        Serial.println("Place sensor on BLACK surface...");
+        delay(3000);
+        _robot.grabberSensor.calibrate(150, false);
+        _oled.clear();
+
+        _oled.displayText("Calibration complete!");
+        _oled.display();
+        Serial.println("Calibration complete!");
+        _oled.clear();
+
+        while (true)
+        {
+            delay(500);
+            switch (_robot.grabberSensor.getColor()) {
+            case COLOR_RED:   
+                _oled.clear();
+                Serial.println("RED");
+                _oled.displayText("RED");
+                _oled.display(); 
+                break;
+            case COLOR_GREEN: 
+                _oled.clear();
+                Serial.println("GREEN"); 
+                _oled.displayText("GREEN");
+                _oled.display();
+                break;
+            case COLOR_BLUE:  
+                _oled.clear();
+                Serial.println("BLUE"); 
+                _oled.displayText("BLUE");
+                _oled.display();
+                break;
+            case COLOR_BLACK: 
+                _oled.clear();
+                Serial.println("BLACK");
+                _oled.displayText("BLACK");
+                _oled.display(); 
+                break;
+            case COLOR_WHITE: 
+                _oled.clear();
+                Serial.println("WHITE");
+                _oled.displayText("WHITE");
+                _oled.display();
+                break;
+            default:          
+                _oled.clear();
+                Serial.println("UNKNOWN");
+                _oled.displayText("UNKOWN");
+                _oled.display(); 
+                break;
+            }
+        }
+        
+        
     }
 
 }

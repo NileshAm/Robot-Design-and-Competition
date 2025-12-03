@@ -5,15 +5,15 @@ Grabber::Grabber(ServoMotor& grabServo, ServoMotor& liftServo, CurrentSensor& cu
 {
     _grabSpeed = 50;     // % of servo speed for grab
     _liftAngle = 180;     // lift position
-    _downAngle = 0;      // initial/rest position
+    _downAngle = 10;      // initial/rest position
     _openAngle = 50;      // fully open
     _closeAngle =130;    // fully closed limit
 }
 
 void Grabber::init() {
     // Set initial positions
-    _grabServo.init(_openAngle/2);   
-    _liftServo.init(_liftAngle/2);     
+    _grabServo.init((_openAngle+_closeAngle)/2);   
+    _liftServo.init(170);     
     
     home();
 
@@ -29,10 +29,10 @@ void Grabber::home(int grabberPos, int liftPos) {
     if (grabberPos == -1 && liftPos == -1)
     {
         grabberPos=_openAngle/2;
-        liftPos=_liftAngle/2;
+        liftPos = 10;
     }   
-    _grabServo.moveSmooth(_openAngle/2, _openAngle,5, _grabSpeed);
-    _liftServo.moveSmooth(_liftAngle/2, _liftAngle,5, _grabSpeed);
+    _grabServo.moveSmooth((_openAngle+_closeAngle)/2, _openAngle,5, _grabSpeed);
+    _liftServo.moveSmooth(170, _liftAngle,5, _grabSpeed);
 
 }
 
@@ -42,7 +42,6 @@ bool Grabber::grab() {
     for (float angle = _grabServo.getAngle(); angle <= _closeAngle; angle += 5) {
         _grabServo.writeAngle(angle);
         delay(_grabSpeed);
-
         if (_currentSensor.isSpike()) {
             digitalWrite(LED_BUILTIN, HIGH);
             int holdPos = angle + 5;
@@ -60,6 +59,9 @@ bool Grabber::grab() {
 
 void Grabber::lift() {
     _liftServo.moveSmooth(_liftServo.getAngle(), _downAngle, 5, _grabSpeed);
+}
+void Grabber::liftBox() {
+    _liftServo.moveSmooth(_liftServo.getAngle(), _liftServo.getAngle()-45 , 5, _grabSpeed);
 }
 
 void Grabber::release() {

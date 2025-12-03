@@ -62,7 +62,7 @@ class Robot {
 
         void goTillTicks(long targetTicks);
         void goTillCM(float cm);
-        void goCell(int8_t cells);
+        void goCell(int8_t cells=1);
 
         void calibrateIR();
 

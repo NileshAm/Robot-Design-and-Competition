@@ -57,10 +57,12 @@ void setup()
     frontTopTof.init(39);
     oled.displayText("TOF init complete...", 0, 30, 1);
 
-    ColorSensor grabberSensor(11, 12, 13, 14, 15);
-    ColorSensor boxColorSensor(35, 37, 31, 33, 29);
+    ColorSensor boxColorSensor(11, 12, 13, 14, 15, 61);
+    ColorSensor grabberSensor(35, 37, 31, 33, 39, 41);
     boxColorSensor.begin();
+    grabberSensor.begin();
     oled.displayText("Color init complete...", 0, 40, 1);
+    
     pushbutton btnUp(50);
     pushbutton btnDown(48);
     pushbutton btnSelect(52);
@@ -70,12 +72,12 @@ void setup()
     oled.clear();
     oled.displayText("Button init complete...", 0, 0, 1); 
     
-// --- Grabber Initialization ---
-// TODO: UPDATE PINS
-ServoMotor grabServo(-1); 
-ServoMotor liftServo(-1);
-CurrentSensor currentSensor(-1); 
-Grabber grabber(grabServo, liftServo, currentSensor);
+    // --- Grabber Initialization ---
+    ServoMotor grabServo(8); 
+    ServoMotor liftServo(9);
+    CurrentSensor currentSensor(A8, 0.001, 60); 
+    Grabber grabber(grabServo, liftServo, currentSensor);
+    grabber.init();
 
     Robot robot(leftMotor, rightMotor, ir, frontTof, leftTof, leftTof2, frontTopTof, rightTof, grabberSensor, boxColorSensor, grabber, oled);
     oled.displayText("Robot init complete...", 0, 10, 1);
@@ -84,8 +86,6 @@ Grabber grabber(grabServo, liftServo, currentSensor);
     oled.clear();
     MenuSystem *menu;
     menu = new MenuSystem(oled, btnUp, btnDown, btnSelect, grabberSensor, robot);
-    // Initialize Grabber
-    grabber.init();
 
     // Initialize Menu
     menu->begin();
