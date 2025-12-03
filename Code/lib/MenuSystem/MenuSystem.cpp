@@ -106,10 +106,13 @@ void MenuSystem::singleWallFollow() {
     _oled.displayCenteredText("Single wall follow...", 1);
     _oled.display();
 
+    _robot.MotorL.resetTicks();
+    _robot.MotorR.resetTicks();
     while (true)
     {
         _robot.followSingleWall();
     }
+    _robot.brake();
     _oled.clear();
     _oled.displayCenteredText("Task Done", 1);
     _oled.display();
@@ -121,6 +124,18 @@ void MenuSystem::test() {
     while (true)
     {
         // _robot.IRDebug();
+
+        // Serial.print(_robot.frontTof.readRange());
+        // Serial.print(",");
+        // Serial.print(_robot.frontTopTof.readRange());
+        // Serial.print(",");
+        // Serial.print(_robot.leftTof.readRange());
+        // Serial.print(",");
+        // Serial.print(_robot.leftTof2.readRange());
+        // Serial.print(",");
+        // Serial.print(_robot.rightTof.readRange());
+        // Serial.println(",");
+
         
         // Serial.print(_robot.junction.isLine());
         // Serial.print(",");
@@ -138,16 +153,21 @@ void MenuSystem::test() {
         // Serial.print(_robot.MotorR.getTicks());
         // Serial.println(",");
 
-        double dig[8];
-        _robot.ir.readNormalized(dig);
-        for (int i = 0; i < 8; i++){
-            Serial.print(dig[i]);
-            Serial.print(",");
-        }
-        Serial.println();
-        delay(100);
+        // _robot.MotorL.setSpeed(30);
+        // _robot.MotorR.setSpeed(30);
+
+        // double dig[8];
+        // _robot.ir.readNormalized(dig);
+        // for (int i = 0; i < 8; i++){
+        //     Serial.print(dig[i]);
+        //     Serial.print(",");
+        // }
+        // Serial.println();
+        // delay(100);
+
+        // _robot.
     }
-    
+
 }
 void MenuSystem::ramp() {
     _oled.clear();
@@ -156,9 +176,9 @@ void MenuSystem::ramp() {
 
     while (_robot.junction.isAllBlack())
     {
-        _robot.followRamp();
+        _robot.followRamp(-40);
     }
-    _robot.stop();
+    _robot.brake();
 }
 void MenuSystem::objectDetect() {
     _oled.clear();
@@ -243,13 +263,13 @@ void MenuSystem::debugTOF() {
         _oled.displayText("Top", 30, 0, 1);
         _oled.displayText("left", 60, 0, 1);
         _oled.displayText("left2", 90, 0, 1);
-        _oled.displayText("right", 120, 0, 1);
+        _oled.displayText("right", 0, 10, 1);
 
-        _oled.displayText((String)_robot.frontTof.readRange(), 0, 0, 1);
-        _oled.displayText((String)_robot.frontTopTof.readRange(), 30, 0, 1);
-        _oled.displayText(((String)_robot.leftTof.readRange()), 60, 0, 1);
-        _oled.displayText((String)_robot.leftTof2.readRange(), 90, 0, 1);
-        _oled.displayText((String)_robot.rightTof.readRange(), 120, 0, 1);
+        _oled.displayText((String)_robot.frontTof.readRange(), 0, 20, 1);
+        _oled.displayText((String)_robot.frontTopTof.readRange(), 30, 20, 1);
+        _oled.displayText(((String)_robot.leftTof.readRange()), 60, 20, 1);
+        _oled.displayText((String)_robot.leftTof2.readRange(), 90, 20, 1);
+        _oled.displayText((String)_robot.rightTof.readRange(), 0, 30, 1);
         
         delay(100);
     }
@@ -275,7 +295,7 @@ void MenuSystem::straightLine() {
         // _oled.clear();
         // _oled.displayText((String)_robot.MotorR.getTicks(), 0, 0, 1);
         // _oled.displayText((String)_robot.MotorL.getTicks(), 10, 0, 1);
-        _robot.moveStraight();
+        _robot.moveStraight(30);
     }
 
 }
@@ -285,45 +305,18 @@ void MenuSystem::gridRun() {
     _oled.displayText("Grid run...", 0, 0, 1);
     delay(1000);
     
-    while (true)
+    for (int8_t i = 0; i < 2; i++)
     {
-        _robot.goCell();
+        _robot.goCell(2);
+        _robot.goTillCM(5);
+        _robot.turn(-90);
+        delay(500);
+        _robot.goTillCM(-5);
+        _robot.goCell(2);
+        _robot.goTillCM(5);
+        _robot.turn(-90);
         
     }
-    
-    // int8_t count = 0;
-    // bool Triggered = false;
-    // while (count < 9)
-    // {
-    //     if(!_robot.junction.isLine()){
-    //         if (!Triggered){
-    //             count++;
-    //             Triggered = true;
-    //         }
-    //         _robot.moveStraight(20);
-    //     }else{
-    //         Triggered = false;
-    //         _robot.followLine(20);
-
-    //     }
-    // }
-    // _robot.turn90();
-    // while (count < 2)
-    // {
-    //     if(_robot.junction.isAllWhite()){
-    //         if (!Triggered){
-    //             count++;
-    //             // _oled.clear();
-    //             // _oled.displayText("count: " + String(count), 0, 10, 1);
-    //             Triggered = true;
-    //         }
-    //         _robot.moveStraight(10);
-    //     }else{
-    //         Triggered = false;
-    //         _robot.followLine(20);
-
-    //     }
-    // }
 
     _robot.brake();
 

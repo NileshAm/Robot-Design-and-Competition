@@ -60,7 +60,7 @@ class Robot {
 
         void goTillTicks(long targetTicks);
         void goTillCM(float cm);
-        void goCell();
+        void goCell(int8_t cells);
 
         void calibrateIR();
 
@@ -82,7 +82,7 @@ class Robot {
 
     private:
         pushbutton* _interruptButton = nullptr;
-        float _speed = 40;
+        float _speed = 30;
         PID _straightLinePID;
         PID _lineFollowerPID;
         PID _rampPID;
