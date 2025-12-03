@@ -276,11 +276,11 @@ void MenuSystem::detectColor() {
     _oled.clear();
     _oled.displayText("White", 0, 0, 1);
     delay(2000);
-    _robot.boxColorSensor.calibrate(100);
+    _robot.boxColorSensor.scanSamples(100);
     _oled.clear();
     _oled.displayText("Black", 0, 0, 1);
     delay(2000);
-    _robot.boxColorSensor.calibrate(100, false);
+    _robot.boxColorSensor.scanSamples(100, false);
     _oled.clear();
     _oled.displayCenteredText("Color detection running", 1);
     _oled.display();

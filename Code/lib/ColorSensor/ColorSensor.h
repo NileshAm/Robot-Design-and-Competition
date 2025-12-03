@@ -12,11 +12,13 @@ public:
   void begin(); // sets pins (default: 20% scaling)
   void setScaling(bool s0, bool s1); // manual control if needed
   void readRaw(uint32_t &r, uint32_t &g, uint32_t &b); // raw period (microseconds)
-  void calibrate(uint16_t samples, bool reset = true); // reset=false keeps previous min/max
+  void scanSamples(uint16_t samples, bool reset = true); // reset=false keeps previous min/max
+  void calibrate(); // High-level calibration with EEPROM support
+
   ColorName getColor(); // returns stable color or COLOR_UNKNOWN until stable
 
   void saveCalibration();
-  void loadCalibration();
+  bool loadCalibration();
 
 private:
   uint8_t _s0,_s1,_s2,_s3,_out,_oe;

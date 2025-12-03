@@ -60,7 +60,7 @@ void ColorSensor::readRaw(uint32_t &r, uint32_t &g, uint32_t &b) {
   digitalWrite(_oe, HIGH);
 }
 
-void ColorSensor::calibrate(uint16_t samples, bool reset) {
+void ColorSensor::scanSamples(uint16_t samples, bool reset) {
   uint32_t r,g,b;
   if (reset) {
     _rMin = _gMin = _bMin = UINT32_MAX;
@@ -164,7 +164,7 @@ void ColorSensor::saveCalibration() {
     EEPROM.put(EEPROM_COLOR_START_ADDR + 20, _bMax);
 }
 
-void ColorSensor::loadCalibration() {
+bool ColorSensor::loadCalibration() {
     uint32_t rMin, gMin, bMin, rMax, gMax, bMax;
     EEPROM.get(EEPROM_COLOR_START_ADDR, rMin);
     EEPROM.get(EEPROM_COLOR_START_ADDR + 4, gMin);
@@ -177,5 +177,25 @@ void ColorSensor::loadCalibration() {
     if (rMax > rMin && gMax > gMin && bMax > bMin && rMin != UINT32_MAX) {
         _rMin = rMin; _gMin = gMin; _bMin = bMin;
         _rMax = rMax; _gMax = gMax; _bMax = bMax;
+        return true;
+    }
+    return false;
+}
+
+void ColorSensor::calibrate() {
+    if (loadCalibration()) {
+        Serial.println("Calibration loaded from EEPROM.");
+    } else {
+        Serial.println("No valid calibration found. Starting calibration...");
+        
+        Serial.println("Place sensor on WHITE surface...");
+        delay(3000); 
+        scanSamples(150, true); 
+
+        Serial.println("Place sensor on BLACK surface...");
+        delay(3000);
+        scanSamples(150, false);
+
+        Serial.println("Calibration complete! Values saved to EEPROM.");
     }
 }
