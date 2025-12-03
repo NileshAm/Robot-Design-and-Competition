@@ -1,6 +1,19 @@
 #include "Robot.h"
 
-Robot::Robot(Motor &Motor_R, Motor &Motor_L, IRArray &IR_Arr, Tof &frontTof, Tof &leftTof, Tof &leftTof2, Tof &frontTopTof, Tof &rightTof, ColorSensor &grabberSensor, ColorSensor &boxColorSensor, OLED &oled) : MotorR(Motor_R),MotorL(Motor_L),ir(IR_Arr),frontTof(frontTof),leftTof(leftTof),leftTof2(leftTof2),frontTopTof(frontTopTof),rightTof(rightTof),grabberSensor(grabberSensor),boxColorSensor(boxColorSensor),junction(IR_Arr),oled(oled),
+Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof& leftTof, Tof& leftTof2, Tof& frontTopTof, Tof& rightTof, ColorSensor& grabberSensor, ColorSensor& boxColorSensor, Grabber& grabber, OLED& oled) :
+    MotorR(Motor_R),
+    MotorL(Motor_L),
+    ir(IR_Arr),
+    frontTof(frontTof),
+    leftTof(leftTof),
+    leftTof2(leftTof2),
+    frontTopTof(frontTopTof),
+    rightTof(rightTof),
+    grabberSensor(grabberSensor),
+    boxColorSensor(boxColorSensor),
+    grabber(grabber),
+    junction(IR_Arr),
+    oled(oled),
 
 _straightLinePID(0.04, 0, 0, 0),
 _rampPID(1, 0, 0, 0),

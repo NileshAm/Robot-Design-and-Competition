@@ -4,6 +4,9 @@
 #include <Tof.h>
 #include <OLED.h>
 #include <ColorSensor.h>
+#include <Grabber.h>
+#include <ServoMotor.h>
+#include <CurrentSensor.h>
 #include <Robot.h>
 #include <Utils.h>
 #include <pushbutton.h>
@@ -65,15 +68,26 @@ void setup()
     btnDown.init();
     btnSelect.init();
     oled.clear();
-    oled.displayText("Button init complete...", 0, 0, 1);
+    oled.displayText("Button init complete...", 0, 0, 1); 
+    
+// --- Grabber Initialization ---
+// TODO: UPDATE PINS
+ServoMotor grabServo(-1); 
+ServoMotor liftServo(-1);
+CurrentSensor currentSensor(-1); 
+Grabber grabber(grabServo, liftServo, currentSensor);
 
-    Robot robot(leftMotor, rightMotor, ir, frontTof, leftTof, leftTof2, frontTopTof, rightTof, grabberSensor, boxColorSensor, oled);
+    Robot robot(leftMotor, rightMotor, ir, frontTof, leftTof, leftTof2, frontTopTof, rightTof, grabberSensor, boxColorSensor, grabber, oled);
     oled.displayText("Robot init complete...", 0, 10, 1);
 
 
     oled.clear();
     MenuSystem *menu;
     menu = new MenuSystem(oled, btnUp, btnDown, btnSelect, grabberSensor, robot);
+    // Initialize Grabber
+    grabber.init();
+
+    // Initialize Menu
     menu->begin();
     while (true)
     {
