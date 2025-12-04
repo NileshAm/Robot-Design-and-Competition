@@ -63,6 +63,7 @@ private:
 
     void test();
     void calibrateIR();
+    void calibrateColor();
     void singleWallFollow();
     void objectDetect();
     void ramp();
