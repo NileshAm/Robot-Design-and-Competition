@@ -1,8 +1,9 @@
 // ColorSensor.cpp
 #include "ColorSensor.h"
+#define EEPROM_COLOR_START_ADDR 300
 
-ColorSensor::ColorSensor(uint8_t s0Pin, uint8_t s1Pin, uint8_t s2Pin, uint8_t s3Pin, uint8_t outPin)
-: _s0(s0Pin), _s1(s1Pin), _s2(s2Pin), _s3(s3Pin), _out(outPin),
+ColorSensor::ColorSensor(uint8_t s0Pin, uint8_t s1Pin, uint8_t s2Pin, uint8_t s3Pin, uint8_t outPin, uint8_t oePin)
+: _s0(s0Pin), _s1(s1Pin), _s2(s2Pin), _s3(s3Pin), _out(outPin), _oe(oePin),
   _rMin(UINT32_MAX), _gMin(UINT32_MAX), _bMin(UINT32_MAX),
   _rMax(0), _gMax(0), _bMax(0),
   _rSmooth(0), _gSmooth(0), _bSmooth(0),
@@ -13,10 +14,14 @@ void ColorSensor::begin() {
   pinMode(_s1, OUTPUT);
   pinMode(_s2, OUTPUT);
   pinMode(_s3, OUTPUT);
+  pinMode(_s3, OUTPUT);
   pinMode(_out, INPUT);
+  pinMode(_oe, OUTPUT);
+  digitalWrite(_oe, HIGH); // Disable by default
   // Set default scaling to 20% (recommended for Arduino). If you want other scaling, call setScaling().
   digitalWrite(_s0, HIGH);
   digitalWrite(_s1, LOW);
+  loadCalibration();
 }
 
 void ColorSensor::setScaling(bool s0, bool s1){
@@ -42,13 +47,20 @@ uint32_t ColorSensor::_readChannel(bool c2, bool c3) {
 }
 
 void ColorSensor::readRaw(uint32_t &r, uint32_t &g, uint32_t &b) {
+  // Enable Output
+  digitalWrite(_oe, LOW);
+  delayMicroseconds(100); // Allow stabilization
+
   // S2/S3 selection: (LL=RED, HH=GREEN, LH=BLUE) — common wiring for TCS modules
   r = _readChannel(LOW, LOW);   // red
   g = _readChannel(HIGH, HIGH); // green
   b = _readChannel(LOW, HIGH);  // blue
+  
+  // Disable Output
+  digitalWrite(_oe, HIGH);
 }
 
-void ColorSensor::calibrate(uint16_t samples, bool reset) {
+void ColorSensor::scan(uint16_t samples, bool reset) {
   uint32_t r,g,b;
   if (reset) {
     _rMin = _gMin = _bMin = UINT32_MAX;
@@ -60,6 +72,7 @@ void ColorSensor::calibrate(uint16_t samples, bool reset) {
     _rMax = max(_rMax, r); _gMax = max(_gMax, g); _bMax = max(_bMax, b);
     delay(10); // small pause to let sensor settle; adjust as needed
   }
+  saveCalibration();
 }
 
 // normalize: returns 0..255 where 255 = highest intensity (inverted because lower period => higher light)
@@ -140,4 +153,46 @@ ColorName ColorSensor::getColor() {
 
   if (_stableCount >= 2) return candidate;
   return COLOR_UNKNOWN;
+}
+
+void ColorSensor::saveCalibration() {
+    EEPROM.put(EEPROM_COLOR_START_ADDR, _rMin);
+    EEPROM.put(EEPROM_COLOR_START_ADDR + 4, _gMin);
+    EEPROM.put(EEPROM_COLOR_START_ADDR + 8, _bMin);
+    EEPROM.put(EEPROM_COLOR_START_ADDR + 12, _rMax);
+    EEPROM.put(EEPROM_COLOR_START_ADDR + 16, _gMax);
+    EEPROM.put(EEPROM_COLOR_START_ADDR + 20, _bMax);
+}
+
+bool ColorSensor::loadCalibration() {
+    uint32_t rMin, gMin, bMin, rMax, gMax, bMax;
+    EEPROM.get(EEPROM_COLOR_START_ADDR, rMin);
+    EEPROM.get(EEPROM_COLOR_START_ADDR + 4, gMin);
+    EEPROM.get(EEPROM_COLOR_START_ADDR + 8, bMin);
+    EEPROM.get(EEPROM_COLOR_START_ADDR + 12, rMax);
+    EEPROM.get(EEPROM_COLOR_START_ADDR + 16, gMax);
+    EEPROM.get(EEPROM_COLOR_START_ADDR + 20, bMax);
+
+    // Validate: Max should be greater than Min, and not default uninitialized values
+    if (rMax > rMin && gMax > gMin && bMax > bMin && rMin != UINT32_MAX) {
+        _rMin = rMin; _gMin = gMin; _bMin = bMin;
+        _rMax = rMax; _gMax = gMax; _bMax = bMax;
+        return true;
+    }
+    return false;
+}
+
+void ColorSensor::calibrate() {
+    Serial.println("Starting calibration...");
+    
+    Serial.println("Place sensor on WHITE surface...");
+    delay(3000); 
+    scan(150, true); 
+
+    Serial.println("Place sensor on BLACK surface...");
+    delay(3000);
+    scan(150, false);
+
+    saveCalibration();
+    Serial.println("Calibration complete! Values saved to EEPROM.");
 }

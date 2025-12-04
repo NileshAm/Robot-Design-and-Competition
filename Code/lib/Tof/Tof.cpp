@@ -8,7 +8,7 @@ Tof::Tof(uint8_t xshut, int address, uint8_t sda, uint8_t scl)
     _scl = scl;
 
     pinMode(_xshut, OUTPUT);
-    Adafruit_VL6180X _sensor = Adafruit_VL6180X();
+    _sensor = Adafruit_VL6180X();
     
 };
 
@@ -30,6 +30,8 @@ void Tof::init(int offset)
     if(!_sensor.begin()){
         Serial.println("Tof failed to initialize");
         while (1);
+    }else{
+        Serial.println("Tof initialization complete");
     }
     _sensor.setAddress(_address);
     delay(10);

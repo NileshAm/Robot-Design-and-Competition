@@ -6,16 +6,18 @@ public:
   // dir1/dir2 = H-bridge direction pins, pwm = PWM pin
   // encA/encB = quadrature encoder pins (encA must be interrupt-capable)
   // ticksPerRev = encoder ticks per full shaft revolution
-  Motor(uint8_t dir1, uint8_t dir2, uint8_t pwm,
+  Motor(uint8_t dir1, uint8_t dir2, uint8_t pwmF, uint8_t pwmB,
         uint8_t encA, uint8_t encB, uint16_t ticksPerRev = 600, float wheelDiameter = 6.3);
 
   void init();                 // sets pinModes, checks/attaches interrupt
+  void brake();
   void setSpeed(float pct);   // -100..100 (negative = reverse)
   long getTicks();             // thread-safe read
   float getWheelDiameter();
   float getTicksPerRev();
   void resetTicks();
   float getRPM();              // simple delta-based RPM
+  long getTicksPerDistance(float cm); // get ticks for a given distance in cm
 
   void goTillTicks(long targetTicks, float speed);
   void goTillCM(float cm, float speed);
@@ -24,7 +26,7 @@ public:
 
 private:
   // pins
-  uint8_t _dir1, _dir2, _pwm, _encA, _encB;
+  uint8_t _dir1, _dir2, _pwmF, _pwmB, _encA, _encB;
 
   // encoder state
   volatile long _ticks = 0;
