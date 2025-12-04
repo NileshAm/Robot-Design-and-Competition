@@ -1,5 +1,9 @@
 #include "IRArray.h"
 #include <Utils.h>
+#include <EEPROM.h>
+
+#define EEPROM_SCALE_START_ADDR 0
+#define EEPROM_OFFSET_START_ADDR 200
 
 IRArray::IRArray(uint8_t n, const uint8_t* pins,
                  const float* weights, float threshold)
@@ -22,8 +26,19 @@ IRArray::IRArray(uint8_t n, const uint8_t* pins,
 
         _minV[i] = 1023;
         _maxV[i] = 0;
-        _scale[i] = 1.0f;
-        _offset[i]= 0.0f;
+        
+        // Load from EEPROM
+        double s, o;
+        EEPROM.get(EEPROM_SCALE_START_ADDR + i * sizeof(double), s);
+        EEPROM.get(EEPROM_OFFSET_START_ADDR + i * sizeof(double), o);
+
+        if (isnan(s) || isnan(o) || s <= 0.0) {
+             _scale[i] = 1.0f;
+             _offset[i]= 0.0f;
+        } else {
+             _scale[i] = s;
+             _offset[i] = o;
+        }
     }
     if (_weightSum <= 0.0f) _weightSum = 1.0f; // avoid /0
 }
@@ -60,6 +75,9 @@ void IRArray::calibrate() {
         uint16_t range = (_maxV[i] > _minV[i]) ? (uint16_t)(_maxV[i] - _minV[i]) : 1;
         _scale[i]  = 1.0f / (float)range;
         _offset[i] = _scale[i] * (float)_minV[i];
+        
+        EEPROM.put(EEPROM_SCALE_START_ADDR + i * sizeof(double), _scale[i]);
+        EEPROM.put(EEPROM_OFFSET_START_ADDR + i * sizeof(double), _offset[i]);
     }
 }
 
@@ -79,7 +97,7 @@ void IRArray::digitalRead(bool* out) {
     // use readNormalized()
     double* norm = new double[_n];
     readNormalized(norm);
-    for (uint8_t i=0;i<_n;++i) out[i] = (norm[i] >= _threshold);
+    for (uint8_t i=0;i<_n;++i) out[i] = (norm[i] <= _threshold);
     delete[] norm;
 }
 
