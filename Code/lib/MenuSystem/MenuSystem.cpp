@@ -554,7 +554,7 @@ void MenuSystem::update()
             debugIR();
             break;
 
-            drawMenu();
         }
+        drawMenu();
     }
 }

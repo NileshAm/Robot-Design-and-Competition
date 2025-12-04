@@ -1,5 +1,6 @@
 #include "IRArray.h"
 #include <Utils.h>
+#include <EEPROM.h>
 
 #define EEPROM_SCALE_START_ADDR 0
 #define EEPROM_OFFSET_START_ADDR 200
