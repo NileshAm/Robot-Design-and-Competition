@@ -129,6 +129,7 @@ void MenuSystem::calibrateColor()
     _oled.displayCenteredText("Done", 1);
     _oled.display();
     delay(1500);
+    drawMenu();
 }
 
 void MenuSystem::singleWallFollow()
