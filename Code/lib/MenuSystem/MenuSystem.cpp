@@ -108,6 +108,29 @@ void MenuSystem::calibrateIR()
     _oled.display();
     delay(1500);
 }
+void MenuSystem::calibrateColor()
+{
+    _oled.clear();
+    _oled.displayCenteredText("Place on WHITE", 1);
+    _oled.display();
+    delay(3000);
+
+    _robot.grabberSensor.scan(150, true);
+
+    _oled.clear();
+    _oled.displayCenteredText("Place on BLACK", 1);
+    _oled.display();
+    delay(3000);
+
+    _robot.grabberSensor.scan(150, false);
+    _robot.grabberSensor.saveCalibration();
+
+    _oled.clear();
+    _oled.displayCenteredText("Done", 1);
+    _oled.display();
+    delay(1500);
+}
+
 void MenuSystem::singleWallFollow()
 {
     _oled.clear();
@@ -188,7 +211,7 @@ void MenuSystem::test()
         //     _robot.grabber.release();
         // }
         delay(3000);
-        _robot.grabberSensor.calibrate();
+        //calibrateColor();
         _oled.clear();
 
         while (true)
@@ -522,7 +545,7 @@ void MenuSystem::update()
             calibrateIR();
             break;
         case 10:
-            _robot.grabberSensor.calibrate();
+            calibrateColor();
             break;
         case 11:
             gridRun();
