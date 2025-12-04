@@ -244,7 +244,14 @@ void MenuSystem::ramp()
 
     while (_robot.junction.isAllBlack())
     {
-        _robot.followRamp(-40);
+        Serial.println(String(_robot.MotorL.getRPM())+","+String(_robot.MotorR.getRPM()));
+        if(fabs(_robot.MotorL.getRPM() + _robot.MotorR.getRPM())/2 > 100){
+            // _robot.brake();
+            _robot.followRamp(-10);   
+        }else{
+            _robot.followRamp(-40);
+            
+        }
     }
     _robot.brake();
 }
