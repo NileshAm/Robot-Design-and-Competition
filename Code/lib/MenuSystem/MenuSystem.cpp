@@ -111,18 +111,35 @@ void MenuSystem::calibrateIR()
 void MenuSystem::calibrateColor()
 {
     _oled.clear();
+    _oled.displayCenteredText("Place on RED", 1);
+    _oled.display();
+    delay(3000);
+    _robot.grabberSensor.calibrateTarget(COLOR_RED, 150);
+
+    _oled.clear();
+    _oled.displayCenteredText("Place on GREEN", 1);
+    _oled.display();
+    delay(3000);
+    _robot.grabberSensor.calibrateTarget(COLOR_GREEN, 150);
+
+    _oled.clear();
+    _oled.displayCenteredText("Place on BLUE", 1);
+    _oled.display();
+    delay(3000);
+    _robot.grabberSensor.calibrateTarget(COLOR_BLUE, 150);
+
+    _oled.clear();
     _oled.displayCenteredText("Place on WHITE", 1);
     _oled.display();
     delay(3000);
-
-    _robot.grabberSensor.scan(150, true);
+    _robot.grabberSensor.calibrateTarget(COLOR_WHITE, 150);
 
     _oled.clear();
     _oled.displayCenteredText("Place on BLACK", 1);
     _oled.display();
     delay(3000);
+    _robot.grabberSensor.calibrateTarget(COLOR_BLACK, 150);
 
-    _robot.grabberSensor.scan(150, false);
     _robot.grabberSensor.saveCalibration();
 
     _oled.clear();

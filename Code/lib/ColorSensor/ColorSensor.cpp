@@ -4,10 +4,11 @@
 
 ColorSensor::ColorSensor(uint8_t s0Pin, uint8_t s1Pin, uint8_t s2Pin, uint8_t s3Pin, uint8_t outPin, uint8_t oePin)
 : _s0(s0Pin), _s1(s1Pin), _s2(s2Pin), _s3(s3Pin), _out(outPin), _oe(oePin),
-  _rMin(UINT32_MAX), _gMin(UINT32_MAX), _bMin(UINT32_MAX),
-  _rMax(0), _gMax(0), _bMax(0),
-  _rSmooth(0), _gSmooth(0), _bSmooth(0),
-  _lastColor(COLOR_UNKNOWN), _stableCount(0) {}
+  _lastColor(COLOR_UNKNOWN), _stableCount(0) {
+    // Initialize with some defaults
+    _calRed = {0,0,0}; _calGreen = {0,0,0}; _calBlue = {0,0,0};
+    _calWhite = {0,0,0}; _calBlack = {0,0,0};
+}
 
 void ColorSensor::begin() {
   pinMode(_s0, OUTPUT);
@@ -60,139 +61,82 @@ void ColorSensor::readRaw(uint32_t &r, uint32_t &g, uint32_t &b) {
   digitalWrite(_oe, HIGH);
 }
 
-void ColorSensor::scan(uint16_t samples, bool reset) {
-  uint32_t r,g,b;
-  if (reset) {
-    _rMin = _gMin = _bMin = UINT32_MAX;
-    _rMax = _gMax = _bMax = 0;
-  }
-  for (uint16_t i = 0; i < samples; ++i) {
-    readRaw(r,g,b);
-    _rMin = min(_rMin, r); _gMin = min(_gMin, g); _bMin = min(_bMin, b);
-    _rMax = max(_rMax, r); _gMax = max(_gMax, g); _bMax = max(_bMax, b);
-    delay(10); // small pause to let sensor settle; adjust as needed
-  }
-  saveCalibration();
-}
+void ColorSensor::calibrateTarget(ColorName color, uint16_t samples) {
+  uint32_t rSum = 0, gSum = 0, bSum = 0;
+  uint32_t r, g, b;
 
-// normalize: returns 0..255 where 255 = highest intensity (inverted because lower period => higher light)
-uint8_t ColorSensor::_normalize(uint32_t value, uint32_t minVal, uint32_t maxVal) {
-  if (minVal == UINT32_MAX || maxVal == 0 || maxVal <= minVal) return 0;
-  // clamp
-  if (value < minVal) value = minVal;
-  if (value > maxVal) value = maxVal;
-  float n = float(maxVal - value) / float(maxVal - minVal); // 0..1 with 1 = strongest reflection
-  if (n < 0.0) n = 0.0; if (n > 1.0) n = 1.0;
-  return (uint8_t)round(n * 255.0);
-}
-
-ColorName ColorSensor::getColor() {
-  uint32_t rRaw,gRaw,bRaw;
-  readRaw(rRaw,gRaw,bRaw);
-
-  // convert to 0..255 normalized intensities
-  uint8_t rN = _normalize(rRaw, _rMin, _rMax);
-  uint8_t gN = _normalize(gRaw, _gMin, _gMax);
-  uint8_t bN = _normalize(bRaw, _bMin, _bMax);
-
-  // smoothing (EMA)
-  const float alpha = 0.35f;
-  _rSmooth = _rSmooth * (1.0f - alpha) + rN * alpha;
-  _gSmooth = _gSmooth * (1.0f - alpha) + gN * alpha;
-  _bSmooth = _bSmooth * (1.0f - alpha) + bN * alpha;
-
-  float avgBright = (_rSmooth + _gSmooth + _bSmooth) / 3.0f;
-
-  // thresholds — tweak for your setup
-  const float BLACK_THRESHOLD = 10.0f; // near zero brightness -> black
-  const float WHITE_SIMILARITY = 20.0f; // components similar -> white if bright
-  const float WHITE_BRIGHTNESS = 200.0f;
-
-  // BLACK?
-  if (avgBright < BLACK_THRESHOLD) {
-    if (_lastColor == COLOR_BLACK) _stableCount++;
-    else { _lastColor = COLOR_BLACK; _stableCount = 0; }
-    if (_stableCount >= 2) return COLOR_BLACK;
-    return COLOR_UNKNOWN;
+  for (uint16_t i = 0; i < samples; i++) {
+    readRaw(r, g, b);
+    rSum += r;
+    gSum += g;
+    bSum += b;
+    delay(10);
   }
 
-  // WHITE? (all components similar and bright)
-  if (fabs(_rSmooth - _gSmooth) < WHITE_SIMILARITY && fabs(_gSmooth - _bSmooth) < WHITE_SIMILARITY && avgBright > WHITE_BRIGHTNESS) {
-    if (_lastColor == COLOR_WHITE) _stableCount++;
-    else { _lastColor = COLOR_WHITE; _stableCount = 0; }
-    if (_stableCount >= 2) return COLOR_WHITE;
-    return COLOR_UNKNOWN;
+  ColorReading avg = { rSum / samples, gSum / samples, bSum / samples };
+
+  switch (color) {
+    case COLOR_RED:   _calRed = avg; break;
+    case COLOR_GREEN: _calGreen = avg; break;
+    case COLOR_BLUE:  _calBlue = avg; break;
+    case COLOR_WHITE: _calWhite = avg; break;
+    case COLOR_BLACK: _calBlack = avg; break;
+    default: break;
   }
-
-  // find dominated component
-  float mx = max(_rSmooth, max(_gSmooth, _bSmooth));
-  float second = (_rSmooth==mx) ? max(_gSmooth,_bSmooth) : ((_gSmooth==mx) ? max(_rSmooth,_bSmooth) : max(_rSmooth,_gSmooth));
-  const float DOM_MARGIN = 30.0f; // how much larger the dominant must be than the next best
-
-  ColorName candidate = COLOR_UNKNOWN;
-  if (mx - second > DOM_MARGIN) {
-    if (mx == _rSmooth) candidate = COLOR_RED;
-    else if (mx == _gSmooth) candidate = COLOR_GREEN;
-    else candidate = COLOR_BLUE;
-  } else {
-    // fallback: compute simple Euclidean distance to pure RGB vectors
-    auto dist = [](float a, float b, float c, float ta, float tb, float tc){
-      return (a-ta)*(a-ta) + (b-tb)*(b-tb) + (c-tc)*(c-tc);
-    };
-    float dr = dist(_rSmooth,_gSmooth,_bSmooth, 255,0,0);
-    float dg = dist(_rSmooth,_gSmooth,_bSmooth, 0,255,0);
-    float db = dist(_rSmooth,_gSmooth,_bSmooth, 0,0,255);
-    if (dr < dg && dr < db) candidate = COLOR_RED;
-    else if (dg < dr && dg < db) candidate = COLOR_GREEN;
-    else candidate = COLOR_BLUE;
-  }
-
-  // hysteresis: require several stable reads
-  if (candidate == _lastColor) _stableCount++;
-  else { _lastColor = candidate; _stableCount = 0; }
-
-  if (_stableCount >= 2) return candidate;
-  return COLOR_UNKNOWN;
 }
 
 void ColorSensor::saveCalibration() {
-    EEPROM.put(EEPROM_COLOR_START_ADDR, _rMin);
-    EEPROM.put(EEPROM_COLOR_START_ADDR + 4, _gMin);
-    EEPROM.put(EEPROM_COLOR_START_ADDR + 8, _bMin);
-    EEPROM.put(EEPROM_COLOR_START_ADDR + 12, _rMax);
-    EEPROM.put(EEPROM_COLOR_START_ADDR + 16, _gMax);
-    EEPROM.put(EEPROM_COLOR_START_ADDR + 20, _bMax);
+    int addr = EEPROM_COLOR_START_ADDR;
+    EEPROM.put(addr, _calRed); addr += sizeof(ColorReading);
+    EEPROM.put(addr, _calGreen); addr += sizeof(ColorReading);
+    EEPROM.put(addr, _calBlue); addr += sizeof(ColorReading);
+    EEPROM.put(addr, _calWhite); addr += sizeof(ColorReading);
+    EEPROM.put(addr, _calBlack); addr += sizeof(ColorReading);
 }
 
 bool ColorSensor::loadCalibration() {
-    uint32_t rMin, gMin, bMin, rMax, gMax, bMax;
-    EEPROM.get(EEPROM_COLOR_START_ADDR, rMin);
-    EEPROM.get(EEPROM_COLOR_START_ADDR + 4, gMin);
-    EEPROM.get(EEPROM_COLOR_START_ADDR + 8, bMin);
-    EEPROM.get(EEPROM_COLOR_START_ADDR + 12, rMax);
-    EEPROM.get(EEPROM_COLOR_START_ADDR + 16, gMax);
-    EEPROM.get(EEPROM_COLOR_START_ADDR + 20, bMax);
-
-    // Validate: Max should be greater than Min, and not default uninitialized values
-    if (rMax > rMin && gMax > gMin && bMax > bMin && rMin != UINT32_MAX) {
-        _rMin = rMin; _gMin = gMin; _bMin = bMin;
-        _rMax = rMax; _gMax = gMax; _bMax = bMax;
-        return true;
-    }
-    return false;
+    int addr = EEPROM_COLOR_START_ADDR;
+    EEPROM.get(addr, _calRed); addr += sizeof(ColorReading);
+    EEPROM.get(addr, _calGreen); addr += sizeof(ColorReading);
+    EEPROM.get(addr, _calBlue); addr += sizeof(ColorReading);
+    EEPROM.get(addr, _calWhite); addr += sizeof(ColorReading);
+    EEPROM.get(addr, _calBlack); addr += sizeof(ColorReading);
+    return true;
 }
 
-void ColorSensor::calibrate() {
-    Serial.println("Starting calibration...");
-    
-    Serial.println("Place sensor on WHITE surface...");
-    delay(3000); 
-    scan(150, true); 
+ColorName ColorSensor::getColor() {
+  uint32_t r, g, b;
+  readRaw(r, g, b);
 
-    Serial.println("Place sensor on BLACK surface...");
-    delay(3000);
-    scan(150, false);
+  auto dist = [&](const ColorReading& target) -> uint32_t {
+      long dr = (long)r - (long)target.r;
+      long dg = (long)g - (long)target.g;
+      long db = (long)b - (long)target.b;
+      return (uint32_t)(dr*dr + dg*dg + db*db);
+  };
 
-    saveCalibration();
-    Serial.println("Calibration complete! Values saved to EEPROM.");
+  uint32_t dRed = dist(_calRed);
+  uint32_t dGreen = dist(_calGreen);
+  uint32_t dBlue = dist(_calBlue);
+  uint32_t dWhite = dist(_calWhite);
+  uint32_t dBlack = dist(_calBlack);
+
+  uint32_t minD = dRed;
+  ColorName detected = COLOR_RED;
+
+  if (dGreen < minD) { minD = dGreen; detected = COLOR_GREEN; }
+  if (dBlue < minD) { minD = dBlue; detected = COLOR_BLUE; }
+  if (dWhite < minD) { minD = dWhite; detected = COLOR_WHITE; }
+  if (dBlack < minD) { minD = dBlack; detected = COLOR_BLACK; }
+
+  // Stability check
+  if (detected == _lastColor) {
+    _stableCount++;
+  } else {
+    _lastColor = detected;
+    _stableCount = 0;
+  }
+
+  if (_stableCount >= 2) return detected;
+  return COLOR_UNKNOWN;
 }
