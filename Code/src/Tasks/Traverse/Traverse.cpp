@@ -61,16 +61,17 @@ namespace Traverse
 
     void bypassLeft(Robot& robot) {
         robot.turnLeft();
-        robot.goCell();
-        updatePosition();
+        robot.goCell(2); 
         robot.turnRight();
+        robot.goCell();
+
     }
 
     void bypassRight(Robot& robot) {
         robot.turnRight();
-        robot.goCell();
-        updatePosition();
+        robot.goCell(2);
         robot.turnLeft();
+        robot.goCell();
     }
     //FIX : Store position on map
     void storePos(Robot &robot) {
