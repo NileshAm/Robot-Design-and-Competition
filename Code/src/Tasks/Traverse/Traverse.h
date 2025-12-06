@@ -4,7 +4,6 @@
 #include <Robot.h>
 #include <Junction.h>
 
-namespace Task1 {
+namespace Traverse {
     void run(Robot& robot);
-    void runDynamicBypassTest(Robot& robot);
 }

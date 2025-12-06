@@ -172,11 +172,11 @@ void MenuSystem::test()
 {
     _oled.clear();
     _oled.displayCenteredText("Testing...", 1);
-    _robot.goCell(2);
-    _robot.goTillCM(8);
-    _robot.turn(-90);
-    _robot.goTillCM(-5);
-    _robot.goCell(2);
+    _robot.goCell();
+    // _robot.goTillCM(8);
+    // _robot.turn(-90);
+    // _robot.goTillCM(-5);
+    // _robot.goCell(2);
 
     // _robot.brake();
     // _robot.turn90();
@@ -497,6 +497,11 @@ void MenuSystem::GrabBox()
     }
 }
 
+void MenuSystem::runTask1()
+{
+    runTask("Task 1", Task1::run);
+}
+
 // -------------------------------
 // Main update loop
 // -------------------------------
@@ -581,8 +586,19 @@ void MenuSystem::update()
         case 14:
             debugIR();
             break;
+        case 15:
+            runTask1();
+            break;
+        case 16:
+            runTask("Bypass Test", Task1::runDynamicBypassTest);
+            break;
+        case 17:
+            runTask("Traverse", Traverse::run);
+            break;
 
         }
         drawMenu();
     }
 }
+
+

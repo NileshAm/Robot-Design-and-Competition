@@ -338,22 +338,118 @@ class Robot:
                 
         return False
 
+    def classify_object(self, tx, ty):
+        """
+        Simulates the robot facing the object and using Front/FrontTop TOF to classify.
+        Returns 'box' or 'obstacle'.
+        """
+        if not self.grid_map.is_obstacle(tx, ty):
+            return None
+            
+        true_type = self.grid_map.obstacles[(tx, ty)]
+        if true_type in ['r', 'g', 'b']:
+            return 'box'
+        else:
+            return 'obstacle'
+
+    def approach_and_scan(self, tx, ty):
+        """
+        Simulates the Approach -> Turn Left -> Scan -> Turn Right -> Return sequence.
+        Returns the color of the box.
+        """
+        print(f"Approaching box at ({tx}, {ty})...")
+        print("Turning Left (Box on Right)...")
+        print("Scanning...")
+        
+        true_type = self.grid_map.obstacles[(tx, ty)]
+        color = 'unknown'
+        if true_type == 'r': color = 'red'
+        elif true_type == 'g': color = 'green'
+        elif true_type == 'b': color = 'blue'
+        
+        print(f"Scanned Color: {color}")
+        print("Turning Right (Face Box)...")
+        print("Returning to junction...")
+        
+        return true_type # Return the internal code 'r', 'g', 'b'
+
     def scan_and_report_local(self):
         self.scan_beams = [] 
-        check_list = [(self.x, self.y - 1), (self.x, self.y + 1), (self.x + self.direction, self.y)]
         
-        for nx, ny in check_list:
-            if self.is_valid_pos(nx, ny):
-                self.add_scan_beam(nx, ny)
-                if self.grid_map.get_target(nx, ny):
-                    rec = f"Target at ({nx},{ny})"
-                    if rec not in self.grid_map.recorded_items: self.grid_map.recorded_items.append(rec)
-                if self.grid_map.is_obstacle(nx, ny):
-                    self.grid_map.known_obstacles.add((nx, ny))
-                    obs_type = self.grid_map.obstacles[(nx, ny)]
-                    self.found_boxes[(nx, ny)] = obs_type
-                    rec = f"Box ({obs_type}) at ({nx},{ny})"
-                    if rec not in self.grid_map.recorded_items: self.grid_map.recorded_items.append(rec)
+        # Determine coordinates for Front, Right, Left based on current direction
+        # direction 1 = Right (+X), direction -1 = Left (-X)
+        
+        front_pos = (self.x + self.direction, self.y)
+        
+        if self.direction == 1:
+            right_pos = (self.x, self.y + 1)
+            left_pos = (self.x, self.y - 1)
+        else:
+            right_pos = (self.x, self.y - 1)
+            left_pos = (self.x, self.y + 1)
+            
+        # 1. Check Front
+        fx, fy = front_pos
+        if self.is_valid_pos(fx, fy):
+            self.add_scan_beam(fx, fy)
+            if self.grid_map.is_obstacle(fx, fy):
+                self.grid_map.known_obstacles.add((fx, fy))
+                # Classify
+                obj_type = self.classify_object(fx, fy)
+                if obj_type == 'box':
+                    # Approach and Scan
+                    color_code = self.approach_and_scan(fx, fy)
+                    self.found_boxes[(fx, fy)] = color_code
+                    rec = f"Box ({color_code}) at ({fx},{fy})"
+                else:
+                    self.found_boxes[(fx, fy)] = 'obstacle'
+                    rec = f"Obstacle at ({fx},{fy})"
+                
+                if rec not in self.grid_map.recorded_items: self.grid_map.recorded_items.append(rec)
+            
+            if self.grid_map.get_target(fx, fy):
+                rec = f"Target at ({fx},{fy})"
+                if rec not in self.grid_map.recorded_items: self.grid_map.recorded_items.append(rec)
+
+        # 2. Check Right
+        rx, ry = right_pos
+        if self.is_valid_pos(rx, ry):
+            self.add_scan_beam(rx, ry)
+            if self.grid_map.is_obstacle(rx, ry):
+                self.grid_map.known_obstacles.add((rx, ry))
+                # Turn Right to Face
+                print("Turning Right to face object...")
+                obj_type = self.classify_object(rx, ry)
+                if obj_type == 'box':
+                    color_code = self.approach_and_scan(rx, ry)
+                    self.found_boxes[(rx, ry)] = color_code
+                    rec = f"Box ({color_code}) at ({rx},{ry})"
+                else:
+                    self.found_boxes[(rx, ry)] = 'obstacle'
+                    rec = f"Obstacle at ({rx},{ry})"
+                print("Turning Left to return...")
+                
+                if rec not in self.grid_map.recorded_items: self.grid_map.recorded_items.append(rec)
+
+        # 3. Check Left
+        lx, ly = left_pos
+        if self.is_valid_pos(lx, ly):
+            self.add_scan_beam(lx, ly)
+            if self.grid_map.is_obstacle(lx, ly):
+                self.grid_map.known_obstacles.add((lx, ly))
+                # Turn Left to Face
+                print("Turning Left to face object...")
+                obj_type = self.classify_object(lx, ly)
+                if obj_type == 'box':
+                    color_code = self.approach_and_scan(lx, ly)
+                    self.found_boxes[(lx, ly)] = color_code
+                    rec = f"Box ({color_code}) at ({lx},{ly})"
+                else:
+                    self.found_boxes[(lx, ly)] = 'obstacle'
+                    rec = f"Obstacle at ({lx},{ly})"
+                print("Turning Right to return...")
+                
+                if rec not in self.grid_map.recorded_items: self.grid_map.recorded_items.append(rec)
 
     def add_scan_beam(self, tx, ty):
         start = (self.pixel_x, self.pixel_y)

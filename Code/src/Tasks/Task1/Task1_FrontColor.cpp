@@ -1,10 +1,12 @@
-#include "Task1.h"
+///don't use this untill front color sensor is placed
+
+#include "Task1_FrontColor.h"
 #include <Utils.h>
 #include <Grabber.h>
 #include <ServoMotor.h>
 #include <CurrentSensor.h>
 
-namespace Task1
+namespace Task1Front
 {
     // --- Constants ---
     const int GRID_SIZE = 9;
@@ -122,7 +124,7 @@ namespace Task1
 
     bool is_obstacle(int8_t cx, int8_t cy) {
         if (cx < 0 || cx >= GRID_SIZE || cy < 0 || cy >= GRID_SIZE) return true;
-        return grid[cx][cy] == TYPE_OBSTACLE; // || grid[cx][cy] == TYPE_FILLED_DROP_ZONE 
+        return grid[cx][cy] == TYPE_OBSTACLE || grid[cx][cy] == TYPE_FILLED_DROP_ZONE;
     }
 
     // --- Helper Functions ---
@@ -152,47 +154,34 @@ namespace Task1
 
     ColorName approachAndScan(Robot& robot) {
         // Pre-condition: Robot is facing the object (Box)
-        // Action: Move close, Turn Left (Box on Right), Scan, Turn Right, Move back, Return color.
+        // Action: Move close, Scan with Front Color Sensor, Return.
+        // NO TURNING NEEDED
         
         robot.oled.displayText("Approaching...", 0, 20, 1);
         
-        // 1. Record initial distance
-        int initial_distance = robot.frontTof.readRange();
-        
-        // 2. Move Forward until close (target ~60mm for color sensor)
+        // 1. Move Forward until close
+        // We want to be ~40-50mm away for the front color sensor
+        // Safety timeout
         unsigned long t0 = millis();
-        while (robot.frontTof.readRange() > 60 && millis() - t0 < 2000) {
+        // Move closer than before (e.g. < 50mm)
+        while (robot.frontTof.readRange() > 50 && millis() - t0 < 2000) {
             robot.moveStraight(15); // Slow approach
             delay(10);
         }
         robot.stop();
-        delay(100);
         
-        // 3. Turn Left 90 (Box is now on Right side for color sensor)
-        robot.turn(-90);
-        delay(200);
+        // 2. Scan Color (Front Sensor)
+        delay(200); // Stabilize
+        ColorName color = robot.boxColorSensor.getColor();
         
-        // 4. Scan Color
-        ColorName color = robot.grabberSensor.getColor();
-        delay(100);
-        
-        // 5. Turn Right 90 (Face box again - back to original orientation)
-        robot.turn(90);
-        delay(100);
-        
-        // 6. Move Backward to original position
-        // Use encoder-based movement or move back until at junction
-        // Move back slowly while checking for the junction
+        // 3. Move Backward to original position
+        // Move back until we hit the junction (all white line)
         robot.moveStraight(-15);
-        unsigned long t1 = millis();
-        while (!robot.junction.isAllWhite() && millis() - t1 < 3000) {
+        while (!robot.junction.isAllWhite()) {
             robot.ir.updateSensors();
-            delay(10);
+            delay(1);
         }
         robot.stop();
-        
-        // 7. Make sure we're centered on the junction
-        delay(100);
         
         return color;
     }
@@ -248,31 +237,19 @@ namespace Task1
             return {static_cast<int8_t>(x + abs_dx), static_cast<int8_t>(y + abs_dy)};
         };
 
-        // Only scan during SCANNING phase, not during COLLECTING
-        if (state != STATE_SCANNING) {
-            return;
-        }
-
         // 1. Check Front
         if (robot.detectFrontBox()) {
             Point p = get_rel_pos(1, 0);
-            if (is_valid_pos(p.x, p.y) && grid[p.x][p.y] == TYPE_NONE) {
-                // Already facing front, so directly classify
+            if (is_valid_pos(p.x, p.y) && (grid[p.x][p.y] == TYPE_NONE || grid[p.x][p.y] == TYPE_OBSTACLE)) {
                 BoxType type = classifyObject(robot);
-                
                 if (type == TYPE_BOX) {
-                    // It's a box, we need to scan color by approaching
+                    // It's a box, we need to scan color.
+                    // Approach and Scan
                     ColorName color = approachAndScan(robot);
-                    
-                    if (color == COLOR_RED) {
-                        grid[p.x][p.y] = TYPE_RED;
-                    } else if (color == COLOR_GREEN) {
-                        grid[p.x][p.y] = TYPE_GREEN;
-                    } else if (color == COLOR_BLUE) {
-                        grid[p.x][p.y] = TYPE_BLUE;
-                    } else {
-                        grid[p.x][p.y] = TYPE_OBSTACLE; // Failed to ID color
-                    }
+                    if (color == COLOR_RED) grid[p.x][p.y] = TYPE_RED;
+                    else if (color == COLOR_GREEN) grid[p.x][p.y] = TYPE_GREEN;
+                    else if (color == COLOR_BLUE) grid[p.x][p.y] = TYPE_BLUE;
+                    else grid[p.x][p.y] = TYPE_OBSTACLE; // Failed to ID color
                 } else {
                     grid[p.x][p.y] = TYPE_OBSTACLE;
                 }
@@ -282,64 +259,42 @@ namespace Task1
         // 2. Check Right
         if (robot.detectRightBox()) {
             Point p = get_rel_pos(0, 1);
-            if (is_valid_pos(p.x, p.y) && grid[p.x][p.y] == TYPE_NONE) {
-                // Turn to Face Right
+            if (is_valid_pos(p.x, p.y) && (grid[p.x][p.y] == TYPE_NONE || grid[p.x][p.y] == TYPE_OBSTACLE)) {
+                // Turn to Face
                 robot.turn(90);
-                delay(100);
-                
                 BoxType type = classifyObject(robot);
-                
                 if (type == TYPE_BOX) {
                     ColorName color = approachAndScan(robot);
-                    
-                    if (color == COLOR_RED) {
-                        grid[p.x][p.y] = TYPE_RED;
-                    } else if (color == COLOR_GREEN) {
-                        grid[p.x][p.y] = TYPE_GREEN;
-                    } else if (color == COLOR_BLUE) {
-                        grid[p.x][p.y] = TYPE_BLUE;
-                    } else {
-                        grid[p.x][p.y] = TYPE_OBSTACLE;
-                    }
+                    if (color == COLOR_RED) grid[p.x][p.y] = TYPE_RED;
+                    else if (color == COLOR_GREEN) grid[p.x][p.y] = TYPE_GREEN;
+                    else if (color == COLOR_BLUE) grid[p.x][p.y] = TYPE_BLUE;
+                    else grid[p.x][p.y] = TYPE_OBSTACLE;
                 } else {
                     grid[p.x][p.y] = TYPE_OBSTACLE;
                 }
-                
-                // Turn back to original direction
+                // Return
                 robot.turn(-90);
-                delay(100);
             }
         }
 
         // 3. Check Left
         if (robot.detectLeftBox()) {
             Point p = get_rel_pos(0, -1);
-            if (is_valid_pos(p.x, p.y) && grid[p.x][p.y] == TYPE_NONE) {
-                // Turn to Face Left
+            if (is_valid_pos(p.x, p.y) && (grid[p.x][p.y] == TYPE_NONE || grid[p.x][p.y] == TYPE_OBSTACLE)) {
+                // Turn to Face
                 robot.turn(-90);
-                delay(100);
-                
                 BoxType type = classifyObject(robot);
-                
                 if (type == TYPE_BOX) {
                     ColorName color = approachAndScan(robot);
-                    
-                    if (color == COLOR_RED) {
-                        grid[p.x][p.y] = TYPE_RED;
-                    } else if (color == COLOR_GREEN) {
-                        grid[p.x][p.y] = TYPE_GREEN;
-                    } else if (color == COLOR_BLUE) {
-                        grid[p.x][p.y] = TYPE_BLUE;
-                    } else {
-                        grid[p.x][p.y] = TYPE_OBSTACLE;
-                    }
+                    if (color == COLOR_RED) grid[p.x][p.y] = TYPE_RED;
+                    else if (color == COLOR_GREEN) grid[p.x][p.y] = TYPE_GREEN;
+                    else if (color == COLOR_BLUE) grid[p.x][p.y] = TYPE_BLUE;
+                    else grid[p.x][p.y] = TYPE_OBSTACLE;
                 } else {
                     grid[p.x][p.y] = TYPE_OBSTACLE;
                 }
-                
-                // Turn back to original direction
+                // Return
                 robot.turn(90);
-                delay(100);
             }
         }
     }
@@ -550,7 +505,7 @@ namespace Task1
                 for (int i=0; i<GRID_SIZE; i++) {
                     for (int j=0; j<GRID_SIZE; j++) {
                         BoxType type = grid[i][j];
-                        if (type == TYPE_RED || type == TYPE_GREEN || type == TYPE_BLUE) {
+                        if (type == TYPE_RED || type == TYPE_GREEN || type == TYPE_BLUE || type == TYPE_OBSTACLE) {
                             int dist = abs_val(x - i) + abs_val(y - j);
                             if (dist < min_dist) {
                                 min_dist = dist;
@@ -588,7 +543,7 @@ namespace Task1
         facing = 0; 
         
         robot.oled.clear();
-        robot.oled.displayText("Task1 Start", 0, 0, 1);
+        robot.oled.displayText("Task1 Front Start", 0, 0, 1);
         
         while (state != STATE_FINISHED)
         {
@@ -598,7 +553,6 @@ namespace Task1
             Point next = determine_next_move();
             
             if (next.x != -1) {
-                // Update Display with Next Move
                 execute_move(robot, next);
             } else {
                 if (state == STATE_COLLECTING) {
@@ -645,44 +599,4 @@ namespace Task1
         robot.stop();
     }
 
-    void runDynamicBypassTest(Robot& robot) {
-        init_map();
-        x = 0;
-        y = 8;
-        direction = 1;
-        facing = 0; 
-        
-        robot.oled.clear();
-        robot.oled.displayText("Test Bypass", 0, 0, 1);
-        
-        // Setup mock obstacle at (1,8)
-        grid[1][8] = TYPE_OBSTACLE;
-        
-        robot.oled.displayText("Calc Bypass...", 0, 10, 1);
-        
-        if (calculate_dynamic_bypass(1, 8)) {
-             robot.oled.displayText("Bypass Found!", 0, 20, 1);
-             delay(1000);
-             
-             while (!move_queue.isEmpty()) {
-                 if (robot.isInterrupted()) return;
-                 Point next = move_queue.pop();
-                 robot.oled.clear();
-                 robot.oled.displayText("Moving to:", 0, 0, 1);
-                 robot.oled.displayText(String(next.x) + "," + String(next.y), 0, 10, 1);
-                 execute_move(robot, next);
-             }
-             
-             robot.oled.clear();
-             robot.oled.displayText("Bypass Done", 0, 0, 1);
-             delay(2000);
-             
-        } else {
-            robot.oled.displayText("No Path!", 0, 20, 1);
-            delay(2000);
-        }
-        
-        robot.stop();
-    }
-
-} // namespace Task1
+} // namespace Task1Front

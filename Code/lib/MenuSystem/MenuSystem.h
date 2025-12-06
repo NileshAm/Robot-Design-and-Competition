@@ -6,6 +6,7 @@
 #include "Robot.h"
 
 #include "../../src/Tasks/Task1/Task1.h"
+#include "../../src/Tasks/Traverse/Traverse.h" // added
 // #include "../src/Tasks/Task2/Task2.h"
 // #include "../src/Tasks/Task3/Task3.h"
 // #include "../src/Tasks/Task4/Task4.h"
@@ -36,7 +37,7 @@ private:
     static const int itemsPerPage = 5;
 
     // Menu items
-    static const int menuCount = 15;
+    static const int menuCount = 18; // updated
     String menuItems[menuCount] = {
         "Test",
         "Line Follow",
@@ -53,6 +54,9 @@ private:
         "Run all",
         "TOF Debug",
         "IR Debug",
+        "Run Task 1",
+        "Test Bypass",
+        "Traverse", // added
     };
 
     int currentIndex = 0;   // Selected entry
@@ -75,5 +79,6 @@ private:
     void gridRun();
     void garbBall();
     void GrabBox();
+    void runTask1();
     void runTask(const String &name, void (*fn)(Robot&));
 };
