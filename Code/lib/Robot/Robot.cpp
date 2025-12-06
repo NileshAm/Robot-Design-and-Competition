@@ -19,7 +19,7 @@ _straightLinePID(0.04, 0, 0, 0),
 _rampPID(1, 0, 0, 0),
 // _lineFollowerPID(0.02,0,-0.6,1400),      40% pwm
 // _lineFollowerPID(0.012,0.004,-0.025,1400),
-_lineFollowerPID(0.02, -0.005, 0, 1400),
+_lineFollowerPID(0.02, -0.005, 0, 700),
 // _singleWallFollowerPID(2,0.15,0,0),
 // _singleWallDistancePID(0.5,0,0.05,100),
 _singleWallFollowerPID(1, 0.1, 0, 0),
@@ -178,9 +178,15 @@ void Robot::goTillTicks(long targetTicks)
     MotorL.resetTicks();
     MotorR.resetTicks();
 
-    while (fabs(MotorL.getTicks() + MotorR.getTicks()) / 2 < targetTicks)
+    while (labs(MotorL.getTicks() + MotorR.getTicks()) / 2 < labs(targetTicks))
     {
-        Robot::moveStraight();
+        if (targetTicks>0)
+        {
+            Robot::moveStraight();
+        }else{
+            Robot::moveStraight(-30);
+        }
+        
         delay(1);
     }
     brake();
@@ -260,7 +266,7 @@ bool Robot::detectObstacle()
 void Robot::IRDebug()
 {
     bool dig[8];
-    ir.digitalRead(dig);
+    ir.readDigital(dig);
     for (int i = 0; i < 8; i++)
     {
         Serial.print(dig[i]);

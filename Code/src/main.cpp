@@ -25,13 +25,13 @@ void setup()
     oled.displayText("Initializing...", 0, 0, 1);
     Serial.println("Initializing...");
 
-    Motor rightMotor(28, 30, 5, 4, 2, 22, 450);  // dir1, dir2, pwmF, pwmB, encA, encB, ticks/rev   motor controller 1
-    Motor leftMotor(32, 34, 6, 7, 3, 24, 450); // dir1, dir2, pwmF, pwmB, encA, encB, ticks/rev     motor controller 2
+    Motor rightMotor(28, 30, 5, 4, 2, 22, 450); // dir1, dir2, pwmF, pwmB, encA, encB, ticks/rev     motor controller 1
+    Motor leftMotor(32, 34, 6, 7, 3, 24, 450);  // dir1, dir2, pwmF, pwmB, encA, encB, ticks/rev   motor controller 2
     leftMotor.init();
     rightMotor.init();
     oled.displayText("Motor init complete...", 0, 10, 1);
     
-    const uint8_t PINS[8] = {A0, A1, A2, A3, A4, A5, A6, A7};
+    const uint8_t PINS[8] = {23, 25, 27, 29, 31, 33, 35, 37};
     // equal weights (or set your own)
     const float W[8] = {0, 100, 200, 300, 400, 500, 600, 700};
     IRArray ir(8, PINS, W, 0.5f);
@@ -57,8 +57,8 @@ void setup()
     frontTopTof.init(39);
     oled.displayText("TOF init complete...", 0, 30, 1);
 
-    ColorSensor boxColorSensor(11, 12, 13, 14, 15, 61);
-    ColorSensor grabberSensor(35, 37, 31, 33, 39, 41);
+    ColorSensor boxColorSensor(A0, A1, A2, A3, A4, A5);
+    ColorSensor grabberSensor(43, 45, 47, 49, 51, 53);
     boxColorSensor.begin();
     grabberSensor.begin();
     oled.displayText("Color init complete...", 0, 40, 1);
@@ -79,7 +79,7 @@ void setup()
     Grabber grabber(grabServo, liftServo, currentSensor);
     grabber.init();
 
-    Robot robot(leftMotor, rightMotor, ir, frontTof, leftTof, leftTof2, frontTopTof, rightTof, grabberSensor, boxColorSensor, grabber, oled);
+    Robot robot(rightMotor, leftMotor, ir, frontTof, leftTof, leftTof2, frontTopTof, rightTof, grabberSensor, boxColorSensor, grabber, oled);
     oled.displayText("Robot init complete...", 0, 10, 1);
 
 

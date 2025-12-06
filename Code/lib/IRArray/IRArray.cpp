@@ -93,17 +93,22 @@ void IRArray::readNormalized(double* out) {
     delete[] raw;
 }
 
-void IRArray::digitalRead(bool* out) {
+void IRArray::readDigital(bool* out) {
     // use readNormalized()
-    double* norm = new double[_n];
-    readNormalized(norm);
-    for (uint8_t i=0;i<_n;++i) out[i] = (norm[i] <= _threshold);
-    delete[] norm;
+    // double* norm = new double[_n];
+    // readNormalized(norm);
+    // for (uint8_t i=0;i<_n;++i) out[i] = (norm[i] <= _threshold);
+    // delete[] norm;
+    for (int i = 0; i < _n; i++)
+    {   
+        out[i] = !digitalRead(_pins[i]);     
+    }
+    
 }
 
 float IRArray::weightedSum() {
     bool* dig = new bool[_n];
-    digitalRead(dig);
+    readDigital(dig);
     float acc = 0.0f;
     for (uint8_t i=0;i<_n;++i) if (dig[i]) acc += _weights[i];
     delete[] dig;

@@ -1,5 +1,6 @@
 #include "MenuSystem.h"
 #include <Arduino.h>
+#include <Utils.h>
 
 MenuSystem::MenuSystem(OLED &oled,
                        pushbutton &btnUp,
@@ -171,8 +172,17 @@ void MenuSystem::test()
 {
     _oled.clear();
     _oled.displayCenteredText("Testing...", 1);
+    _robot.goCell(2);
+    _robot.goTillCM(8);
+    _robot.turn(-90);
+    _robot.goTillCM(-5);
+    _robot.goCell(2);
+
+    // _robot.brake();
+    // _robot.turn90();
+    return;
     while (true)
-    {
+    {     
         // _robot.IRDebug();
 
         // Serial.print(_robot.frontTof.readRange());
@@ -183,7 +193,7 @@ void MenuSystem::test()
         // Serial.print(",");
         // Serial.print(_robot.leftTof2.readRange());
         // Serial.print(",");
-        // Serial.print(_robot.rightTof.readRange());
+        // Serial.println(_robot.rightTof.readRange());
         // Serial.println(",");
 
         // Serial.print(_robot.junction.isLine());
@@ -228,54 +238,63 @@ void MenuSystem::test()
         //     }
         //     _robot.grabber.release();
         // }
-        delay(3000);
-        //calibrateColor();
-        _oled.clear();
+        // delay(3000);
+        // //calibrateColor();
+        // _oled.clear();
 
-        while (true)
-        {
-            delay(500);
-            switch (_robot.grabberSensor.getColor())
-            {
-            case COLOR_RED:
-                _oled.clear();
-                Serial.println("RED");
-                _oled.displayText("RED");
-                _oled.display();
-                break;
-            case COLOR_GREEN:
-                _oled.clear();
-                Serial.println("GREEN");
-                _oled.displayText("GREEN");
-                _oled.display();
-                break;
-            case COLOR_BLUE:
-                _oled.clear();
-                Serial.println("BLUE");
-                _oled.displayText("BLUE");
-                _oled.display();
-                break;
-            case COLOR_BLACK:
-                _oled.clear();
-                Serial.println("BLACK");
-                _oled.displayText("BLACK");
-                _oled.display();
-                break;
-            case COLOR_WHITE:
-                _oled.clear();
-                Serial.println("WHITE");
-                _oled.displayText("WHITE");
-                _oled.display();
-                break;
-            default:
-                _oled.clear();
-                Serial.println("UNKNOWN");
-                _oled.displayText("UNKOWN");
-                _oled.display();
-                break;
-            }
-        }
+        // while (true)
+        // {
+        //     delay(500);
+        //     switch (_robot.grabberSensor.getColor())
+        //     {
+        //     case COLOR_RED:
+        //         _oled.clear();
+        //         Serial.println("RED");
+        //         _oled.displayText("RED");
+        //         _oled.display();
+        //         break;
+        //     case COLOR_GREEN:
+        //         _oled.clear();
+        //         Serial.println("GREEN");
+        //         _oled.displayText("GREEN");
+        //         _oled.display();
+        //         break;
+        //     case COLOR_BLUE:
+        //         _oled.clear();
+        //         Serial.println("BLUE");
+        //         _oled.displayText("BLUE");
+        //         _oled.display();
+        //         break;
+        //     case COLOR_BLACK:
+        //         _oled.clear();
+        //         Serial.println("BLACK");
+        //         _oled.displayText("BLACK");
+        //         _oled.display();
+        //         break;
+        //     case COLOR_WHITE:
+        //         _oled.clear();
+        //         Serial.println("WHITE");
+        //         _oled.displayText("WHITE");
+        //         _oled.display();
+        //         break;
+        //     default:
+        //         _oled.clear();
+        //         Serial.println("UNKNOWN");
+        //         _oled.displayText("UNKOWN");
+        //         _oled.display();
+        //         break;
+        //     }
+        // }
+        // bool val[8];
+        // _robot.ir.readDigital(val);
+        
+        // printArray(val, 8);
+        // delay(100);
+        // _robot.MotorL.setSpeed(30);
+        // Serial.println(_robot.MotorL.getTicks());
+        // delay(100);
     }
+    
 }
 void MenuSystem::ramp()
 {
@@ -393,7 +412,7 @@ void MenuSystem::debugIR()
     {
         _oled.clear();
         bool dig[8];
-        _robot.ir.digitalRead(dig);
+        _robot.ir.readDigital(dig);
         for (int i = 0; i < 8; i++)
         {
             _oled.displayText((String)dig[i], i * 10, 10, 1);
@@ -419,18 +438,10 @@ void MenuSystem::gridRun()
     _oled.clear();
     _oled.displayText("Grid run...", 0, 0, 1);
     delay(1000);
-
-    for (int8_t i = 0; i < 2; i++)
-    {
-        _robot.goCell(2);
-        _robot.goTillCM(5);
-        _robot.turn(-90);
-        delay(500);
-        _robot.goTillCM(-5);
-        _robot.goCell(2);
-        _robot.goTillCM(5);
-        _robot.turn(-90);
-    }
+    _robot.goCell(2);
+    _robot.goTillCM(5);
+    _robot.turn(90);
+    _robot.goCell(2);
 
     _robot.brake();
 

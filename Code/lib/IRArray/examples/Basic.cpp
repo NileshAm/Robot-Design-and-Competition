@@ -28,7 +28,7 @@ void loop() {
 
     ir.readRaw(raw);
     ir.readNormalized(norm);  // internally calls readRaw()
-    ir.digitalRead(dig);      // internally calls readNormalized()
+    ir.readDigital(dig);      // internally calls readNormalized()
 
     float w = ir.weightedSum();
 
