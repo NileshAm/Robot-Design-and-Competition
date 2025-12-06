@@ -50,16 +50,16 @@ namespace Traverse
         else if (facing == 3) x--;
     }
     
-    void turn(Robot& robot, int angle) {
-        robot.turn(angle);
-        delay(200); // Settle
+    // void turn(Robot& robot, int angle) {
+    //     robot.turn(angle);
+    //     delay(200); // Settle
         
-        // Update facing
-        // 90 is Right (+1), -90 is Left (-1)
-        if (angle == 90) facing = (facing + 1) % 4;
-        else if (angle == -90) facing = (facing - 1 + 4) % 4;
-        else if (angle == 180) facing = (facing + 2) % 4;
-    }
+    //     // Update facing
+    //     // 90 is Right (+1), -90 is Left (-1)
+    //     if (angle == 90) facing = (facing + 1) % 4;
+    //     else if (angle == -90) facing = (facing - 1 + 4) % 4;
+    //     else if (angle == 180) facing = (facing + 2) % 4;
+    // }
     
     void updateOLED(Robot& robot) {
         robot.oled.clear();
@@ -102,44 +102,37 @@ namespace Traverse
         // 1. "go from (0,8) to (1,8) (move one cell forward)"
         uint8_t result = robot.goCellWithDetect();
         //processDetectedObjects(robot, result);
-        robot.goCell();
-        robot.goTillCM(5);
-        robot.brake();
-        updatePosition();
-        updateOLED(robot);
-        //delay(1000);
-        turn(robot, -90);
+        //robot.goCell();
+        // // robot.brake();
+        // updatePosition();
+        // updateOLED(robot);
+        robot.turnLeft();
         // 2. "then turn +90..then move one cell..now we are in (1,7) move like that to (1,0)"
         // Move 8 cells to reach (1,0)
-        for(int i=0; i<2; i++) {
-             result = robot.goCellWithDetect();
-             processDetectedObjects(robot, result);
-             robot.goCell();
-            //  robot.goTillCM(5);
-             robot.brake();
-             updatePosition();
-             updateOLED(robot);
-             delay(500);
-        }
+        // for(int i=0; i<5; i++) {
+        //     result = robot.goCellWithDetect();
+        //     processDetectedObjects(robot, result);
+        //     //robot.goCell();
+        //     //robot.goTillCM(5);
+        //     //robot.brake();
+        //      updatePosition();
+        //      updateOLED(robot);
+        //      delay(500);
+        // }
         
         // //3. "the turn -90 ..then go 3 cells..now we are in (4,0)"
-        // turn(robot, 90); // Face Right (1)
-        // //delay(1000);
+        // robot.turnRight(); // Face Right (1)
 
         // for(int i=0; i<3; i++) {
         //      result = robot.goCellWithDetect();
         //      processDetectedObjects(robot, result);
-        //      robot.goCell();
-        //      robot.goTillCM(5);
-        //      robot.brake();
         //      updatePosition();
         //      updateOLED(robot);
         //      delay(1000);
         // }
         
         // // 4. "then turn go to (4,8)" -> Left Turn to face Up
-        // turn(robot, -90); // Face Up (0)
-        // delay(1000);
+        //robot.turnRight(); // Face Up (0)
         
         // for(int i=0; i<4; i++) {
         //      result = robot.goCellWithDetect();
@@ -153,7 +146,7 @@ namespace Traverse
         // }
         
         // // 5. "then turn 90 and go three cells to (7,8)"
-        // turn(robot, 90); // Face Right (1)
+        //robot.turnRight(); // Face Right (1)
         // delay(1000);
         // for(int i=0; i<3; i++) {
         //      result = robot.goCellWithDetect();
@@ -182,7 +175,7 @@ namespace Traverse
 
         robot.oled.clear();
         robot.oled.displayText("Traverse Done", 0, 0, 1);
-        robot.stop();
+        robot.brake();
         delay(2000);
     }
 

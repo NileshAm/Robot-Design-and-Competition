@@ -59,6 +59,7 @@ class Robot {
 
         void turn(int angle);                                              // normal
         void turn(int angle, uint16_t cbEveryMs, TurnCallback cb);         // with callback
+        void centerOnLine();
         void stop();
         void brake();
 

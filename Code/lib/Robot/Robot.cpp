@@ -40,7 +40,7 @@ void Robot::brake()
     MotorR.brake();
 }
 
-void Robot::turn90()
+void Robot::turn90(bool clockwise)
 {
     goTillCM(5);
     if (clockwise)
@@ -56,6 +56,7 @@ void Robot::turn90()
 void Robot::turnLeft()   
 {
     Robot::turn90(false);
+    //Robot::centerOnLine();
 }
 void Robot::turnRight()   
 {
@@ -309,7 +310,7 @@ void Robot::goCell(int8_t cells)
 
     while (count < cells)
     {
-        Serial.println(String(Robot::detectLeftBox()) + "," +String(Robot::detectRightBox()));
+        //Serial.println(String(Robot::detectLeftBox()) + "," +String(Robot::detectRightBox()));
 
         bool onLine = junction.isLine();
 
@@ -353,8 +354,28 @@ void Robot::goCell(int8_t cells)
     }
     brake();
 }
+// void Robot::centerOnLine()
+// {
+//     unsigned long t0 = millis();
+//     while (millis() - t0 < 1000)
+//     {
+//         int error = ir.weightedSum();
+//         if (abs(error) < 10 && abs(error) > -10) // Small threshold
+//         {
+//             break;
+//         }
+//         int correction = (int)_lineFollowerPID.compute((float)error);
+        
+//         // Pivot/Rotate to center
+//         MotorR.setSpeed(-correction);
+//         MotorL.setSpeed(correction);
+//     }
+//     brake();
+// }
+
 uint8_t Robot::goCellWithDetect(int8_t cells)
 {
+    //centerOnLine();
     int8_t count = 0;
     uint8_t detected = DETECT_NONE;
 
