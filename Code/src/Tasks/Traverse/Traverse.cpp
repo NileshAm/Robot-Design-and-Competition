@@ -86,92 +86,79 @@ namespace Traverse
             }
         }
     }
+    //FIX : Store position on map
+    void storePos(Robot &robot) {
+        if (robot.detectObstacle()){
+            // TODO: Update location on map
+        }
+        else{
+            // TODO: Update location on map
+        }
+    }
     
     void run(Robot& robot)
     {
         // Initialize State
         x = 0;
-        y = 8;
+        y = 0;
         facing = 1; // Start facing Right to go (0,8)->(1,8)
         init_map(); // Initialize Map
         
         robot.oled.clear();
         robot.oled.displayText("Traverse Start", 0, 0, 1);
         delay(1000);
-        
-        // 1. "go from (0,8) to (1,8) (move one cell forward)"
-        uint8_t result = robot.goCellWithDetect();
-        //processDetectedObjects(robot, result);
-        //robot.goCell();
-        // // robot.brake();
-        // updatePosition();
-        // updateOLED(robot);
-        robot.turnLeft();
-        // 2. "then turn +90..then move one cell..now we are in (1,7) move like that to (1,0)"
-        // Move 8 cells to reach (1,0)
-        // for(int i=0; i<5; i++) {
-        //     result = robot.goCellWithDetect();
-        //     processDetectedObjects(robot, result);
-        //     //robot.goCell();
-        //     //robot.goTillCM(5);
-        //     //robot.brake();
-        //      updatePosition();
-        //      updateOLED(robot);
-        //      delay(500);
-        // }
-        
-        // //3. "the turn -90 ..then go 3 cells..now we are in (4,0)"
-        // robot.turnRight(); // Face Right (1)
 
-        // for(int i=0; i<3; i++) {
-        //      result = robot.goCellWithDetect();
-        //      processDetectedObjects(robot, result);
-        //      updatePosition();
-        //      updateOLED(robot);
-        //      delay(1000);
-        // }
+        while (robot.junction.isAllBlack())
+        {
+            robot.moveStraight();
+        }
+        robot.turnRight();
+        robot.goCell();
+        x = 1;
+        y = 1;
+
+        for (int row = 0; row < 9; row = row + 3)
+        {
+            for (int col = 0; col < 9; col++)
+            {
+                robot.goCell();
+
+                // updatePosition();
+                // updateOLED(robot);
+                
+                if (robot.detectFrontBox()){
+                    robot.oled.displayText("Front Box", 0, 10, 1);
+                    storePos(robot);
+                }
+                if (robot.detectLeftBox()){
+                    robot.oled.displayText("Left Box", 0, 10, 1);
+                    robot.turnLeft();
+                    storePos(robot);
+                    robot.turnRight();
+                    
+                }
+                if (robot.detectRightBox()){
+                    robot.oled.displayText("Right Box", 0, 10, 1);
+                    robot.turnRight();
+                    storePos(robot);
+                    robot.turnLeft();
+                }
+            }
+            if (row%2==0){
+                robot.turnRight();
+                robot.goCell(2);
+                y = y + 2; 
+                robot.turnRight();
+            }
+            else{
+                robot.turnLeft();
+                robot.goCell(2);
+                y = y + 2; 
+                robot.turnLeft();
+            }
+
+        }
         
-        // // 4. "then turn go to (4,8)" -> Left Turn to face Up
-        //robot.turnRight(); // Face Up (0)
-        
-        // for(int i=0; i<4; i++) {
-        //      result = robot.goCellWithDetect();
-        //      processDetectedObjects(robot, result);
-        //     robot.goCell();
-        //      robot.goTillCM(5);
-        //      robot.brake();
-        //      updatePosition();
-        //      updateOLED(robot);
-        //      delay(1000);
-        // }
-        
-        // // 5. "then turn 90 and go three cells to (7,8)"
-        //robot.turnRight(); // Face Right (1)
-        // delay(1000);
-        // for(int i=0; i<3; i++) {
-        //      result = robot.goCellWithDetect();
-        //      processDetectedObjects(robot, result);
-        //     robot.goCell();
-        //      robot.goTillCM(5);
-        //      robot.brake();
-        //      updatePosition();
-        //      updateOLED(robot);
-        //      delay(1000);
-        // }
-        
-        // // 6. "then turn 90 and go to (7,0)"
-        // turn(robot, 90); // Face Down (2)
-        // delay(1000);
-        // for(int i=0; i<8; i++) {
-        //      result = robot.goCellWithDetect();
-        //      processDetectedObjects(robot, result);
-        //     robot.goCell();
-        //      robot.goTillCM(5);
-        //      robot.brake();
-        //      updatePosition();
-        //      updateOLED(robot);
-        //      delay(1000);
-        // }
 
         robot.oled.clear();
         robot.oled.displayText("Traverse Done", 0, 0, 1);
