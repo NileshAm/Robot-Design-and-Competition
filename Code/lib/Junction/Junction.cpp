@@ -12,13 +12,13 @@ bool Junction::isTurn(){
 bool Junction::isRightTurn(){
     bool out[8];
     _ir.readDigital(out);
-    return pack8(out) == 0b00011111;
+    return pack8(out) == 0b00011111 || pack8(out) == 0b00001111;
 }
 
 bool Junction::isLeftTurn(){
     bool out[8];
     _ir.readDigital(out);
-    return pack8(out) == 0b11111000;
+    return pack8(out) == 0b11111000 || pack8(out) == 0b11110000;
 }
 
 bool Junction::isTJunction(){
@@ -46,5 +46,5 @@ bool Junction::isLine(){
 
     int c = 0;
     for (bool v : out) c += v;
-    return c == 2 || c==3 || c==4;
+    return c == 1 || c == 2 || c==3 || c==4;
 }
