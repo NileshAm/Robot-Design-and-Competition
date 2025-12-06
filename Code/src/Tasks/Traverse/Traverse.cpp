@@ -66,10 +66,12 @@ namespace Traverse
         robot.oled.displayText("Pos: " + String(x) + "," + String(y), 0, 0, 1);
     }
 
-    void checkAndReportObjects(Robot& robot) {
-        bool front = robot.detectFrontBox();
-        bool left = robot.detectLeftBox();
-        bool right = robot.detectRightBox();
+    void processDetectedObjects(Robot& robot, uint8_t detected) {
+        if (detected == Robot::DETECT_NONE) return;
+
+        bool front = (detected & Robot::DETECT_FRONT);
+        bool left = (detected & Robot::DETECT_LEFT);
+        bool right = (detected & Robot::DETECT_RIGHT);
         
         if (front || left || right) {
             robot.stop();
@@ -98,20 +100,20 @@ namespace Traverse
         delay(1000);
         
         // 1. "go from (0,8) to (1,8) (move one cell forward)"
-        checkAndReportObjects(robot);
+        uint8_t result = robot.goCellWithDetect();
+        //processDetectedObjects(robot, result);
         robot.goCell();
         robot.goTillCM(5);
         robot.brake();
         updatePosition();
         updateOLED(robot);
-        delay(1000);
-        
+        //delay(1000);
+        turn(robot, -90);
         // 2. "then turn +90..then move one cell..now we are in (1,7) move like that to (1,0)"
-        turn(robot, 90); // Face Down (2)
-        delay(1000);
         // Move 8 cells to reach (1,0)
-        for(int i=0; i<4; i++) {
-             checkAndReportObjects(robot);
+        for(int i=0; i<2; i++) {
+             result = robot.goCellWithDetect();
+             processDetectedObjects(robot, result);
              robot.goCell();
             //  robot.goTillCM(5);
              robot.brake();
@@ -120,59 +122,63 @@ namespace Traverse
              delay(500);
         }
         
-        //3. "the turn -90 ..then go 3 cells..now we are in (4,0)"
-        turn(robot, -90); // Face Right (1)
-        delay(1000);
+        // //3. "the turn -90 ..then go 3 cells..now we are in (4,0)"
+        // turn(robot, 90); // Face Right (1)
+        // //delay(1000);
 
-        for(int i=0; i<4; i++) {
-             checkAndReportObjects(robot);
-             robot.goCell();
-             robot.goTillCM(5);
-             robot.brake();
-             updatePosition();
-             updateOLED(robot);
-             delay(1000);
-        }
+        // for(int i=0; i<3; i++) {
+        //      result = robot.goCellWithDetect();
+        //      processDetectedObjects(robot, result);
+        //      robot.goCell();
+        //      robot.goTillCM(5);
+        //      robot.brake();
+        //      updatePosition();
+        //      updateOLED(robot);
+        //      delay(1000);
+        // }
         
-        // 4. "then turn go to (4,8)" -> Left Turn to face Up
-        turn(robot, -90); // Face Up (0)
-        delay(1000);
+        // // 4. "then turn go to (4,8)" -> Left Turn to face Up
+        // turn(robot, -90); // Face Up (0)
+        // delay(1000);
         
-        for(int i=0; i<4; i++) {
-             checkAndReportObjects(robot);
-             robot.goCell();
-             robot.goTillCM(5);
-             robot.brake();
-             updatePosition();
-             updateOLED(robot);
-             delay(1000);
-        }
+        // for(int i=0; i<4; i++) {
+        //      result = robot.goCellWithDetect();
+        //      processDetectedObjects(robot, result);
+        //     robot.goCell();
+        //      robot.goTillCM(5);
+        //      robot.brake();
+        //      updatePosition();
+        //      updateOLED(robot);
+        //      delay(1000);
+        // }
         
-        // 5. "then turn 90 and go three cells to (7,8)"
-        turn(robot, 90); // Face Right (1)
-        delay(1000);
-        for(int i=0; i<3; i++) {
-             checkAndReportObjects(robot);
-             robot.goCell();
-             robot.goTillCM(5);
-             robot.brake();
-             updatePosition();
-             updateOLED(robot);
-             delay(1000);
-        }
+        // // 5. "then turn 90 and go three cells to (7,8)"
+        // turn(robot, 90); // Face Right (1)
+        // delay(1000);
+        // for(int i=0; i<3; i++) {
+        //      result = robot.goCellWithDetect();
+        //      processDetectedObjects(robot, result);
+        //     robot.goCell();
+        //      robot.goTillCM(5);
+        //      robot.brake();
+        //      updatePosition();
+        //      updateOLED(robot);
+        //      delay(1000);
+        // }
         
-        // 6. "then turn 90 and go to (7,0)"
-        turn(robot, 90); // Face Down (2)
-        delay(1000);
-        for(int i=0; i<8; i++) {
-             checkAndReportObjects(robot);
-             robot.goCell();
-             robot.goTillCM(5);
-             robot.brake();
-             updatePosition();
-             updateOLED(robot);
-             delay(1000);
-        }
+        // // 6. "then turn 90 and go to (7,0)"
+        // turn(robot, 90); // Face Down (2)
+        // delay(1000);
+        // for(int i=0; i<8; i++) {
+        //      result = robot.goCellWithDetect();
+        //      processDetectedObjects(robot, result);
+        //     robot.goCell();
+        //      robot.goTillCM(5);
+        //      robot.brake();
+        //      updatePosition();
+        //      updateOLED(robot);
+        //      delay(1000);
+        // }
 
         robot.oled.clear();
         robot.oled.displayText("Traverse Done", 0, 0, 1);

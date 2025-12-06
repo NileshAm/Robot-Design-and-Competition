@@ -353,9 +353,10 @@ void Robot::goCell(int8_t cells)
     }
     brake();
 }
-void Robot::goCellWithDetect(int8_t cells)
+uint8_t Robot::goCellWithDetect(int8_t cells)
 {
     int8_t count = 0;
+    uint8_t detected = DETECT_NONE;
 
     enum State
     {
@@ -368,9 +369,32 @@ void Robot::goCellWithDetect(int8_t cells)
     unsigned long offLineStart = 0;
     const unsigned long debounceTime = 50; // 50ms noise filter
 
+    bool lastLeftBox = false;
+    bool lastRightBox = false;
+    bool lastFrontBox = false;
+
     while (count < cells)
     {
-        Serial.println(String(Robot::detectLeftBox()) + "," +String(Robot::detectRightBox())); //FIX: modify to detect box and stop
+        bool curLeftBox = detectLeftBox();
+        bool curRightBox = detectRightBox();
+        bool curFrontBox = detectFrontBox();
+
+        if (curLeftBox && !lastLeftBox) {
+            Serial.println("Left box found");
+            detected |= DETECT_LEFT;
+        }
+        if (curRightBox && !lastRightBox) {
+            Serial.println("Right box found");
+            detected |= DETECT_RIGHT;
+        }
+        if (curFrontBox && !lastFrontBox) {
+            Serial.println("Front box found");
+            detected |= DETECT_FRONT;
+        }
+
+        lastLeftBox = curLeftBox;
+        lastRightBox = curRightBox;
+        lastFrontBox = curFrontBox;
 
         bool onLine = junction.isLine();
 
@@ -413,4 +437,5 @@ void Robot::goCellWithDetect(int8_t cells)
         }
     }
     brake();
+    return detected;
 }
