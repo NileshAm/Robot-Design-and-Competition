@@ -13,6 +13,9 @@ namespace Traverse
     // 0: Up (+Y), 1: Right (+X), 2: Down (-Y), 3: Left (-X)
     int facing = 1; // Start facing Right (+X) as we move (0,8)->(1,8)
     
+    //1,7 --turnright=2, turnleft=0, straight=1
+    //4 - straight=3, turnright=0, turnleft=2
+
     // --- Map Implementation ---
     enum BoxType {
         TYPE_NONE,
@@ -49,50 +52,46 @@ namespace Traverse
         else if (facing == 2) y--;
         else if (facing == 3) x--;
     }
-    
-    // void turn(Robot& robot, int angle) {
-    //     robot.turn(angle);
-    //     delay(200); // Settle
-        
-    //     // Update facing
-    //     // 90 is Right (+1), -90 is Left (-1)
-    //     if (angle == 90) facing = (facing + 1) % 4;
-    //     else if (angle == -90) facing = (facing - 1 + 4) % 4;
-    //     else if (angle == 180) facing = (facing + 2) % 4;
-    // }
+
     
     void updateOLED(Robot& robot) {
         robot.oled.clear();
         robot.oled.displayText("Pos: " + String(x) + "," + String(y), 0, 0, 1);
     }
 
-    void processDetectedObjects(Robot& robot, uint8_t detected) {
-        if (detected == Robot::DETECT_NONE) return;
+    void bypassLeft(Robot& robot) {
+        robot.turnLeft();
+        robot.goCell();
+        updatePosition();
+        robot.turnRight();
+    }
 
-        bool front = (detected & Robot::DETECT_FRONT);
-        bool left = (detected & Robot::DETECT_LEFT);
-        bool right = (detected & Robot::DETECT_RIGHT);
-        
-        if (front || left || right) {
-            robot.stop();
-            robot.oled.clear();
-            if (front) robot.oled.displayText("Front Object Detected", 0, 0, 1);
-            if (left) robot.oled.displayText("Left Object Detected", 0, 10, 1);
-            if (right) robot.oled.displayText("Right Object Detected", 0, 20, 1);
-            
-            // Stop forever (block task)
-            while(true) {
-                delay(100);
-            }
-        }
+    void bypassRight(Robot& robot) {
+        robot.turnRight();
+        robot.goCell();
+        updatePosition();
+        robot.turnLeft();
     }
     //FIX : Store position on map
     void storePos(Robot &robot) {
+        int8_t tx = x;
+        int8_t ty = y;
+
+        if (facing == 0) ty++;
+        else if (facing == 1) tx++;
+        else if (facing == 2) ty--;
+        else if (facing == 3) tx--;
+
+        // Check bounds
+        if (tx < 0 || tx >= GRID_SIZE || ty < 0 || ty >= GRID_SIZE) return;
+
         if (robot.detectObstacle()){
-            // TODO: Update location on map
+            grid[tx][ty] = TYPE_OBSTACLE;
+            robot.oled.displayText("Obstacle at " + String(tx) + "," + String(ty), 0, 20, 1);
         }
         else{
-            // TODO: Update location on map
+            grid[tx][ty] = TYPE_BOX;
+            robot.oled.displayText("Target at " + String(tx) + "," + String(ty), 0, 20, 1);
         }
     }
     
@@ -133,10 +132,12 @@ namespace Traverse
                 if (robot.detectLeftBox()){
                     robot.oled.displayText("Left Box", 0, 10, 1);
                     robot.turnLeft();
-                    storePos(robot);
-                    robot.turnRight();
-                    
+                    storePos(robot); //TODO : update facing direction
+                    robot.turnRight(); 
                 }
+                //facing directions
+                //1,7 --turnright=2, turnleft=0, straight=1
+                //4 - straight=3, turnright=0, turnleft=2
                 if (robot.detectRightBox()){
                     robot.oled.displayText("Right Box", 0, 10, 1);
                     robot.turnRight();
