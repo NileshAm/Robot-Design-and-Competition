@@ -53,7 +53,9 @@ class Robot {
          *       or implementation. Exact rotation angle, timing, and behavior under
          *       load or obstruction are implementation-dependent.
          */
-        void turn90(); // speed -100 to 100
+        void turn90(bool clockwise=true); // speed -100 to 100
+        void turnLeft(); // speed -100 to 100
+        void turnRight(); // speed -100 to 100
 
         void turn(int angle);                                              // normal
         void turn(int angle, uint16_t cbEveryMs, TurnCallback cb);         // with callback

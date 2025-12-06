@@ -42,7 +42,24 @@ void Robot::brake()
 
 void Robot::turn90()
 {
-    Robot::turn(90);
+    goTillCM(5);
+    if (clockwise)
+    {
+        turn(90);
+    }
+    else
+    {
+        turn(-90);
+    }
+    goTillCM(-5);
+}
+void Robot::turnLeft()   
+{
+    Robot::turn90(false);
+}
+void Robot::turnRight()   
+{
+    Robot::turn90(true);
 }
 
 void Robot::turn(int angle)
