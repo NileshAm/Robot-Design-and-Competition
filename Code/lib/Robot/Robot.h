@@ -91,13 +91,14 @@ class Robot {
         void setDoubleWallFollowerPID(float kp, float ki, float kd);
         void setStraightLinePID(float kp, float ki, float kd);
 
+        PID _lineFollowerPID;
+
         void IRDebug();
 
     private:
         pushbutton* _interruptButton = nullptr;
         float _speed = 30;
         PID _straightLinePID;
-        PID _lineFollowerPID;
         PID _rampPID;
         PID _singleWallFollowerPID;
         PID _singleWallDistancePID;

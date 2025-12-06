@@ -172,128 +172,147 @@ void MenuSystem::test()
 {
     _oled.clear();
     _oled.displayCenteredText("Testing...", 1);
-    _robot.goCell();
+    Traverse::run(_robot);
+    // _robot.goCell();
+    // _robot.turnRight();
+    // _robot.goCell();
     // _robot.goTillCM(8);
-    // _robot.turn(-90);
-    // _robot.goTillCM(-5);
-    // _robot.goCell(2);
+    // while (true)
+    // {
+    // _robot.goCell();
+    // _robot.turnLeft();
+    // _robot.goCell();
+    // _robot.IRDebug();
+    // while (true)
+    // {
+    //     if (_robot.junction.isLeftTurn()){
+    //         _robot.turnLeft();
+    //     }
+    //     if (_robot.junction.isRightTurn()){
+    //         _robot.turnRight();
+    //     }
+    //     if (_robot.junction.isLine()){
+    //         _robot.followLine(20);
+    //     }
+    //     if (_robot.junction.isAllBlack()){
+    //         _robot.moveStraight(20);
+    //     }
 
+    // }
     // _robot.brake();
-    // _robot.turn90();
-    return;
-    while (true)
-    {     
-        // _robot.IRDebug();
+    
 
-        // Serial.print(_robot.frontTof.readRange());
-        // Serial.print(",");
-        // Serial.print(_robot.frontTopTof.readRange());
-        // Serial.print(",");
-        // Serial.print(_robot.leftTof.readRange());
-        // Serial.print(",");
-        // Serial.print(_robot.leftTof2.readRange());
-        // Serial.print(",");
-        // Serial.println(_robot.rightTof.readRange());
-        // Serial.println(",");
+    // Serial.print(_robot.frontTof.readRange());
+    // Serial.print(",");
+    // Serial.print(_robot.frontTopTof.readRange());
+    // Serial.print(",");
+    // Serial.print(_robot.leftTof.readRange());
+    // Serial.print(",");
+    // Serial.print(_robot.leftTof2.readRange());
+    // Serial.print(",");
+    // Serial.println(_robot.rightTof.readRange());
+    // Serial.println(",");
 
-        // Serial.print(_robot.junction.isLine());
-        // Serial.print(",");
-        // Serial.print(_robot.junction.isAllWhite());
-        // Serial.print(",");
-        // Serial.print(_robot.junction.isAllBlack());
-        // Serial.print(",");
-        // Serial.print(_robot.junction.isRightTurn());
-        // Serial.print(",");
-        // Serial.print(_robot.junction.isLeftTurn());
-        // Serial.println(",");
+    // Serial.print(_robot.junction.isLine());
+    // Serial.print(",");
+    // Serial.print(_robot.junction.isAllWhite());
+    // Serial.print(",");
+    // Serial.print(_robot.junction.isAllBlack());
+    // Serial.print(",");
+    // Serial.print(_robot.junction.isRightTurn());
+    // Serial.print(",");
+    // Serial.print(_robot.junction.isLeftTurn());
+    // Serial.println(",");
 
-        // Serial.print(_robot.MotorL.getTicks());
-        // Serial.print(",");
-        // Serial.print(_robot.MotorR.getTicks());
-        // Serial.println(",");
+    // Serial.print(_robot.MotorL.getTicks());
+    // Serial.print(",");
+    // Serial.print(_robot.MotorR.getTicks());
+    // Serial.println(",");
 
-        // _robot.MotorL.setSpeed(30);
-        // _robot.MotorR.setSpeed(30);
+    // _robot.MotorL.setSpeed(30);
+    // _robot.MotorR.setSpeed(30);
 
-        // double dig[8];
-        // _robot.ir.readNormalized(dig);
-        // for (int i = 0; i < 8; i++){
-        //     Serial.print(dig[i]);
-        //     Serial.print(",");
-        // }
-        // Serial.println();
-        // delay(100);
+    // double dig[8];
+    // _robot.ir.readNormalized(dig);
+    // for (int i = 0; i < 8; i++){
+    //     Serial.print(dig[i]);
+    //     Serial.print(",");
+    // }
+    // Serial.println();
+    // delay(100);
 
-        // while (true)
-        // {
-        //     if(_robot.grabber.grab()){
-        //         Serial.println("grab");
-        //         delay(2000);
-        //         _robot.grabber.liftBox();
-        //         delay(2000);
-        //         _robot.grabber.reset();
-        //         delay(2000);
-        //         // _robot.grabber.release();
-        //         // delay(2000);
-        //     }
-        //     _robot.grabber.release();
-        // }
-        // delay(3000);
-        // //calibrateColor();
-        // _oled.clear();
+    // while (true)
+    // {
+    //     if(_robot.grabber.grab()){
+    //         Serial.println("grab");
+    //         delay(2000);
+    //         _robot.grabber.liftBox();
+    //         delay(2000);
+    //         _robot.grabber.reset();
+    //         delay(2000);
+    //         // _robot.grabber.release();
+    //         // delay(2000);
+    //     }
+    //     _robot.grabber.release();
+    // }
+    // delay(3000);
+    // //calibrateColor();
+    // _oled.clear();
 
-        // while (true)
-        // {
-        //     delay(500);
-        //     switch (_robot.grabberSensor.getColor())
-        //     {
-        //     case COLOR_RED:
-        //         _oled.clear();
-        //         Serial.println("RED");
-        //         _oled.displayText("RED");
-        //         _oled.display();
-        //         break;
-        //     case COLOR_GREEN:
-        //         _oled.clear();
-        //         Serial.println("GREEN");
-        //         _oled.displayText("GREEN");
-        //         _oled.display();
-        //         break;
-        //     case COLOR_BLUE:
-        //         _oled.clear();
-        //         Serial.println("BLUE");
-        //         _oled.displayText("BLUE");
-        //         _oled.display();
-        //         break;
-        //     case COLOR_BLACK:
-        //         _oled.clear();
-        //         Serial.println("BLACK");
-        //         _oled.displayText("BLACK");
-        //         _oled.display();
-        //         break;
-        //     case COLOR_WHITE:
-        //         _oled.clear();
-        //         Serial.println("WHITE");
-        //         _oled.displayText("WHITE");
-        //         _oled.display();
-        //         break;
-        //     default:
-        //         _oled.clear();
-        //         Serial.println("UNKNOWN");
-        //         _oled.displayText("UNKOWN");
-        //         _oled.display();
-        //         break;
-        //     }
-        // }
-        // bool val[8];
-        // _robot.ir.readDigital(val);
-        
-        // printArray(val, 8);
+    // while (true)
+    // {
+    //     delay(500);
+    //     switch (_robot.grabberSensor.getColor())
+    //     {
+    //     case COLOR_RED:
+    //         _oled.clear();
+    //         Serial.println("RED");
+    //         _oled.displayText("RED");
+    //         _oled.display();
+    //         break;
+    //     case COLOR_GREEN:
+    //         _oled.clear();
+    //         Serial.println("GREEN");
+    //         _oled.displayText("GREEN");
+    //         _oled.display();
+    //         break;
+    //     case COLOR_BLUE:
+    //         _oled.clear();
+    //         Serial.println("BLUE");
+    //         _oled.displayText("BLUE");
+    //         _oled.display();
+    //         break;
+    //     case COLOR_BLACK:
+    //         _oled.clear();
+    //         Serial.println("BLACK");
+    //         _oled.displayText("BLACK");
+    //         _oled.display();
+    //         break;
+    //     case COLOR_WHITE:
+    //         _oled.clear();
+    //         Serial.println("WHITE");
+    //         _oled.displayText("WHITE");
+    //         _oled.display();
+    //         break;
+    //     default:
+    //         _oled.clear();
+    //         Serial.println("UNKNOWN");
+    //         _oled.displayText("UNKOWN");
+    //         _oled.display();
+    //         break;
+    //     }
+    // }
+    // bool val[8];
+    // _robot.ir.readDigital(val);
+    
+    // printArray(val, 8);
         // delay(100);
         // _robot.MotorL.setSpeed(30);
         // Serial.println(_robot.MotorL.getTicks());
         // delay(100);
-    }
+    // }
+    // _robot.brake();
+
     
 }
 void MenuSystem::ramp()

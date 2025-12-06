@@ -40,9 +40,9 @@ void Robot::brake()
     MotorR.brake();
 }
 
-void Robot::turn90(bool clockwise)
+void Robot::turn90(bool clockwise)   
 {
-    goTillCM(5);
+    goTillCM(7);
     if (clockwise)
     {
         turn(90);
@@ -75,18 +75,18 @@ void Robot::turn(int angle, uint16_t cbEveryMs, TurnCallback cb)
 
 void Robot::_turnCore(int angle, bool useCb, uint16_t cbEveryMs, TurnCallback cb)
 {
-    PID turnPID(0.1, 0, 0, 0);
+    PID turnPID(0.15, 0, 0, 0);
     if (angle == 0)
         return;
 
     MotorL.resetTicks();
     MotorR.resetTicks();
 
-    const long target = lround(fabsf(_ticksPerDegree * (float)angle));
+    const long target = lround(fabsf(_ticksPerDegree * (float)angle * 1));
     const int dir = (angle >= 0) ? 1 : -1;
 
-    MotorL.setSpeed(_speed * dir);
-    MotorR.setSpeed(-_speed * dir);
+    MotorL.setSpeed(30 * dir);
+    MotorR.setSpeed(-30 * dir);
 
     unsigned long nextCb = millis() + cbEveryMs;
     const unsigned long TIMEOUT_MS = 8000;
@@ -117,8 +117,8 @@ void Robot::_turnCore(int angle, bool useCb, uint16_t cbEveryMs, TurnCallback cb
         // if ((L >= target && R >= target) || (now - t0 > TIMEOUT_MS))
         //     break;
         float speedFactor = 1.1;
-        MotorR.setSpeed((-_speed * dir * speedFactor) - correction);
-        MotorL.setSpeed((_speed * dir * speedFactor) + correction);
+        MotorR.setSpeed((-30 * dir * speedFactor) - correction);
+        MotorL.setSpeed((30 * dir * speedFactor) + correction);
     }
 
     brake();
@@ -202,7 +202,7 @@ void Robot::goTillTicks(long targetTicks)
         {
             Robot::moveStraight();
         }else{
-            Robot::moveStraight(-30);
+            Robot::moveStraight(-20);
         }
         
         delay(1);
@@ -296,63 +296,28 @@ void Robot::IRDebug()
 void Robot::goCell(int8_t cells)
 {
     int8_t count = 0;
-
-    enum State
+    bool triggered = false;
+    while (!junction.isLine())
     {
-        ON_LINE,
-        OFF_LINE_WAIT,
-        COUNTED
-    };
-    State state = ON_LINE;
-
-    unsigned long offLineStart = 0;
-    const unsigned long debounceTime = 50; // 50ms noise filter
-
+        moveStraight(30);
+    }
+    
     while (count < cells)
     {
-        //Serial.println(String(Robot::detectLeftBox()) + "," +String(Robot::detectRightBox()));
-
-        bool onLine = junction.isLine();
-
-        switch (state)
-        {
-
-        case ON_LINE:
-            if (!onLine)
-            {
-                offLineStart = millis();
-                state = OFF_LINE_WAIT;
-            }
-            followLine(20);
-            break;
-
-        case OFF_LINE_WAIT:
-            // Still off-line and long enough to be a real junction?
-            if (!onLine && millis() - offLineStart >= debounceTime)
-            {
+        if(junction.isLine()){
+            followLine(30);
+            triggered = false;
+        }
+        else{
+            if (!triggered){
                 count++;
-                Serial.println(count);
-                state = COUNTED;
+                triggered = true;
             }
-            // Noise: returned to line too fast → return to ON_LINE
-            else if (onLine)
-            {
-                state = ON_LINE;
-            }
-            moveStraight(20);
-            break;
-
-        case COUNTED:
-            // Stay in COUNTED until line is properly regained
-            if (onLine)
-            {
-                state = ON_LINE;
-            }
-            moveStraight(20);
-            break;
+            moveStraight(30);
         }
     }
     brake();
+    
 }
 // void Robot::centerOnLine()
 // {

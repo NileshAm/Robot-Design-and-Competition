@@ -58,11 +58,22 @@ namespace Traverse
         robot.oled.clear();
         robot.oled.displayText("Pos: " + String(x) + "," + String(y), 0, 0, 1);
     }
+    
+        void bypassRight(Robot& robot) {
+            robot.turnRight();
+            robot.goCell(1);
+            robot.turnLeft();
+            robot.goCell(2);
+            robot.turnLeft();
+            robot.goCell(1);
+            robot.turnRight();
+        }
 
     void bypassLeft(Robot& robot) {
         robot.turnLeft();
         if(robot.detectFrontBox()){
             robot.turnRight();
+            delay(500);
             bypassRight(robot);
             return; 
         }
@@ -80,16 +91,6 @@ namespace Traverse
             robot.goCell(1);
             robot.turnLeft();
 
-    }
-
-    void bypassRight(Robot& robot) {
-        robot.turnRight();
-        robot.goCell(1);
-        robot.turnLeft();
-        robot.goCell(2);
-        robot.turnLeft();
-        robot.goCell(1);
-        robot.turnRight();
     }
     //FIX : Store position on map
     void storePos(Robot &robot) {
@@ -128,57 +129,53 @@ namespace Traverse
 
         while (robot.junction.isAllBlack())
         {
-            robot.moveStraight();
+            robot.moveStraight(20);
         }
         robot.turnRight();
         robot.goCell();
         x = 1;
         y = 1;
+        int8_t initX = 1;
 
-        for (int row = 0; row < 9; row = row + 3)
+        for (int row = 0; row < 8; row++)
         {
-            for (int col = 0; col < 9; col++)
+            for (int col = initX; col < 8; col++)
             {
                 robot.goCell();
-
-                // updatePosition();
-                // updateOLED(robot);
-                
-                if (robot.detectFrontBox()){
-                    robot.oled.displayText("Front Box", 0, 10, 1);
-                    storePos(robot);
+                if (row%2==0)
+                {
+                    x++;
+                }else{
+                    x--;
                 }
-                if (robot.detectLeftBox()){
-                    robot.oled.displayText("Left Box", 0, 10, 1);
-                    robot.turnLeft();
-                    storePos(robot); //TODO : update facing direction
-                    robot.turnRight(); 
-                }
-                //facing directions
-                //1,7 --turnright=2, turnleft=0, straight=1
-                //4 - straight=3, turnright=0, turnleft=2
-                if (robot.detectRightBox()){
-                    robot.oled.displayText("Right Box", 0, 10, 1);
-                    robot.turnRight();
-                    storePos(robot);
-                    robot.turnLeft();
-                }
+                ;
+                Serial.println(String(x) + "\t" + String(y));
+                robot.oled.clear();
+                robot.oled.displayText("Pos: " + String(x) + "," + String(y), 0, 0, 1);
             }
-            if (row%2==0){
+            initX = 0; // After first row, start from 0
+            //  x ++;
+            robot.brake();
+            robot._lineFollowerPID.reset();
+            if (row % 2 == 1)
+            {
                 robot.turnRight();
-                robot.goCell(2);
-                y = y + 2; 
+                robot.goCell(3);
+                robot.brake();
+                y = y + 3;
                 robot.turnRight();
             }
             else{
                 robot.turnLeft();
-                robot.goCell(2);
-                y = y + 2; 
+                robot.goCell(3);
+                robot.brake();
+                y = y + 3; 
                 robot.turnLeft();
             }
-
+            robot.oled.clear();
+            robot.oled.displayText("Pos: " + String(x) + "," + String(y), 0, 0, 1);
         }
-        
+        robot.turn(180);
 
         robot.oled.clear();
         robot.oled.displayText("Traverse Done", 0, 0, 1);
