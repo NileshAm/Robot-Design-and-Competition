@@ -50,11 +50,11 @@ void setup()
     rightTof.disable();
     frontTopTof.disable();
 
-    frontTof.init(19);
-    leftTof.init(2);
+    frontTof.init(17);
+    leftTof.init(8);
     leftTof2.init(-21);
-    rightTof.init(17);
-    frontTopTof.init(39);
+    rightTof.init(10);
+    frontTopTof.init(34);
     oled.displayText("TOF init complete...", 0, 30, 1);
 
     ColorSensor boxColorSensor(A0, A1, A2, A3, A4, A5);

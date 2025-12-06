@@ -248,11 +248,11 @@ void Robot::setStraightLinePID(float kp, float ki, float kd)
 
 bool Robot::detectLeftBox()
 {
-    return leftTof.readRange() < 150;
+    return leftTof.readRange() < 160;
 }
 bool Robot::detectRightBox()
 {
-    return rightTof.readRange() < 150;
+    return rightTof.readRange() < 160;
 }
 bool Robot::detectFrontBox()
 {
@@ -292,6 +292,69 @@ void Robot::goCell(int8_t cells)
 
     while (count < cells)
     {
+        Serial.println(String(Robot::detectLeftBox()) + "," +String(Robot::detectRightBox()));
+
+        bool onLine = junction.isLine();
+
+        switch (state)
+        {
+
+        case ON_LINE:
+            if (!onLine)
+            {
+                offLineStart = millis();
+                state = OFF_LINE_WAIT;
+            }
+            followLine(20);
+            break;
+
+        case OFF_LINE_WAIT:
+            // Still off-line and long enough to be a real junction?
+            if (!onLine && millis() - offLineStart >= debounceTime)
+            {
+                count++;
+                Serial.println(count);
+                state = COUNTED;
+            }
+            // Noise: returned to line too fast → return to ON_LINE
+            else if (onLine)
+            {
+                state = ON_LINE;
+            }
+            moveStraight(20);
+            break;
+
+        case COUNTED:
+            // Stay in COUNTED until line is properly regained
+            if (onLine)
+            {
+                state = ON_LINE;
+            }
+            moveStraight(20);
+            break;
+        }
+    }
+    brake();
+}
+void Robot::goCellWithDetect(int8_t cells)
+{
+    int8_t count = 0;
+
+    enum State
+    {
+        ON_LINE,
+        OFF_LINE_WAIT,
+        COUNTED
+    };
+    State state = ON_LINE;
+
+    unsigned long offLineStart = 0;
+    const unsigned long debounceTime = 50; // 50ms noise filter
+
+    while (count < cells)
+    {
+        Serial.println(String(Robot::detectLeftBox()) + "," +String(Robot::detectRightBox())); //FIX: modify to detect box and stop
+
         bool onLine = junction.isLine();
 
         switch (state)
