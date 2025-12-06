@@ -59,13 +59,21 @@ class Robot {
 
         void turn(int angle);                                              // normal
         void turn(int angle, uint16_t cbEveryMs, TurnCallback cb);         // with callback
+        void centerOnLine();
         void stop();
         void brake();
 
         void goTillTicks(long targetTicks);
         void goTillCM(float cm);
+        enum DetectionFlags {
+            DETECT_NONE = 0,
+            DETECT_LEFT = 1,
+            DETECT_RIGHT = 2,
+            DETECT_FRONT = 4
+        };
+
         void goCell(int8_t cells=1);
-        void goCellWithDetect(int8_t cells=1);
+        uint8_t goCellWithDetect(int8_t cells=1);
 
         void calibrateIR();
 
