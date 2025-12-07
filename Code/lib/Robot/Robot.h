@@ -83,6 +83,8 @@ class Robot {
 
         bool detectObstacle();
 
+        ColorName detectColor();
+
         void setInterruptButton(pushbutton& btn);
         bool isInterrupted();
         void setLineFollowerPID(float kp, float ki, float kd);

@@ -319,109 +319,29 @@ void Robot::goCell(int8_t cells)
     brake();
     
 }
-// void Robot::centerOnLine()
-// {
-//     unsigned long t0 = millis();
-//     while (millis() - t0 < 1000)
-//     {
-//         int error = ir.weightedSum();
-//         if (abs(error) < 10 && abs(error) > -10) // Small threshold
-//         {
-//             break;
-//         }
-//         int correction = (int)_lineFollowerPID.compute((float)error);
-        
-//         // Pivot/Rotate to center
-//         MotorR.setSpeed(-correction);
-//         MotorL.setSpeed(correction);
-//     }
-//     brake();
-// }
 
-uint8_t Robot::goCellWithDetect(int8_t cells)
+ColorName Robot::detectColor()
 {
-    //centerOnLine();
-    int8_t count = 0;
-    uint8_t detected = DETECT_NONE;
+    const int NUM_READS = 5;
+    int counts[COLOR_WHITE + 1] = {0};  // indexes 0..5
 
-    enum State
+    for (int i = 0; i < NUM_READS; i++)
     {
-        ON_LINE,
-        OFF_LINE_WAIT,
-        COUNTED
-    };
-    State state = ON_LINE;
+        ColorName c = boxColorSensor.getColor();  
 
-    unsigned long offLineStart = 0;
-    const unsigned long debounceTime = 50; // 50ms noise filter
+        if (c >= COLOR_UNKNOWN && c <= COLOR_WHITE)
+            counts[(int)c]++;
 
-    bool lastLeftBox = false;
-    bool lastRightBox = false;
-    bool lastFrontBox = false;
-
-    while (count < cells)
-    {
-        bool curLeftBox = detectLeftBox();
-        bool curRightBox = detectRightBox();
-        bool curFrontBox = detectFrontBox();
-
-        if (curLeftBox && !lastLeftBox) {
-            Serial.println("Left box found");
-            detected |= DETECT_LEFT;
-        }
-        if (curRightBox && !lastRightBox) {
-            Serial.println("Right box found");
-            detected |= DETECT_RIGHT;
-        }
-        if (curFrontBox && !lastFrontBox) {
-            Serial.println("Front box found");
-            detected |= DETECT_FRONT;
-        }
-
-        lastLeftBox = curLeftBox;
-        lastRightBox = curRightBox;
-        lastFrontBox = curFrontBox;
-
-        bool onLine = junction.isLine();
-
-        switch (state)
-        {
-
-        case ON_LINE:
-            if (!onLine)
-            {
-                offLineStart = millis();
-                state = OFF_LINE_WAIT;
-            }
-            followLine(20);
-            break;
-
-        case OFF_LINE_WAIT:
-            // Still off-line and long enough to be a real junction?
-            if (!onLine && millis() - offLineStart >= debounceTime)
-            {
-                count++;
-                Serial.println(count);
-                state = COUNTED;
-            }
-            // Noise: returned to line too fast → return to ON_LINE
-            else if (onLine)
-            {
-                state = ON_LINE;
-            }
-            moveStraight(20);
-            break;
-
-        case COUNTED:
-            // Stay in COUNTED until line is properly regained
-            if (onLine)
-            {
-                state = ON_LINE;
-            }
-            moveStraight(20);
-            break;
-        }
+        delay(100);  // 100 ms between samples
     }
-    brake();
-    return detected;
+
+    // Find the enum value with the highest count
+    int bestIndex = COLOR_UNKNOWN;
+    for (int i = COLOR_UNKNOWN + 1; i <= COLOR_WHITE; i++)
+    {
+        if (counts[i] > counts[bestIndex])
+            bestIndex = i;
+    }
+
+    return (ColorName)bestIndex;
 }
