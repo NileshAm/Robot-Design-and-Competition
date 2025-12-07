@@ -322,6 +322,7 @@ void Robot::goCell(int8_t cells)
 
 ColorName Robot::detectColor()
 {
+    goTillCM(5);
     const int NUM_READS = 5;
     int counts[COLOR_WHITE + 1] = {0};  // indexes 0..5
 
@@ -330,8 +331,8 @@ ColorName Robot::detectColor()
         ColorName c = boxColorSensor.getColor();  
 
         if (c >= COLOR_UNKNOWN && c <= COLOR_WHITE)
-            counts[(int)c]++;
-
+        counts[(int)c]++;
+        
         delay(100);  // 100 ms between samples
     }
 
@@ -343,5 +344,6 @@ ColorName Robot::detectColor()
             bestIndex = i;
     }
 
+    goTillCM(-5);
     return (ColorName)bestIndex;
 }
