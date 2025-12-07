@@ -17,4 +17,7 @@ public:
     bool isAllBlack();
     bool isLine();
 
+    bool isLeftEdge();
+    bool isRightEdge();
+
 };

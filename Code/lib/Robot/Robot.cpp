@@ -1,6 +1,6 @@
 #include "Robot.h"
 
-Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof& leftTof, Tof& leftTof2, Tof& frontTopTof, Tof& rightTof, ColorSensor& grabberSensor, ColorSensor& boxColorSensor, Grabber& grabber, OLED& oled) :
+Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof& leftTof, Tof& leftTof2, Tof& frontTopTof, Tof& rightTof, ColorSensor& grabberSensor, ColorSensor& boxColorSensor, Grabber& grabber, OLED& oled, MPU6050 &imu) :
     MotorR(Motor_R),
     MotorL(Motor_L),
     ir(IR_Arr),
@@ -14,12 +14,14 @@ Robot::Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof
     grabber(grabber),
     junction(IR_Arr),
     oled(oled),
+    imu(imu),
 
 _straightLinePID(0.04, 0, 0, 0),
+_straightLineGyroPID(0.5, 0, -0.1, 0),
 _rampPID(1, 0, 0, 0),
 // _lineFollowerPID(0.02,0,-0.6,1400),      40% pwm
 // _lineFollowerPID(0.012,0.004,-0.025,1400),
-_lineFollowerPID(0.02, -0.005, 0, 700),
+_lineFollowerPID(0.02, -0.005, 0, 950),
 // _singleWallFollowerPID(2,0.15,0,0),
 // _singleWallDistancePID(0.5,0,0.05,100),
 _singleWallFollowerPID(1, 0.1, 0, 0),
@@ -222,6 +224,13 @@ void Robot::moveStraight()
     moveStraight(_speed);
 }
 
+void Robot::moveStraightGyro(int initYaw, int speed){
+    int err = initYaw - imu.getYaw();
+    int correction = (int)_straightLineGyroPID.compute(err);
+    MotorR.setSpeed(speed - correction);
+    MotorL.setSpeed(speed + correction);
+}
+
 void Robot::followLine(int speed)
 {
     int error = ir.weightedSum();
@@ -364,7 +373,7 @@ void Robot::goCell(int8_t cells)
     bool triggered = false;
     while (!junction.isLine())
     {
-        moveStraight(30);
+        moveStraightGyro(30);
     }
     
     while (count < cells)
@@ -378,7 +387,7 @@ void Robot::goCell(int8_t cells)
                 count++;
                 triggered = true;
             }
-            moveStraight(30);
+            moveStraightGyro(30);
         }
     }
     brake();
@@ -389,18 +398,15 @@ ColorName Robot::detectColor()
 {
     goTillCM(5);
     const int NUM_READS = 5;
-    int counts[COLOR_WHITE + 1] = {0};  // indexes 0..5
-
+    int counts[COLOR_WHITE + 1] = {0};  // indexes 0..5 
     for (int i = 0; i < NUM_READS; i++)
     {
-        ColorName c = boxColorSensor.getColor();  
-
+        ColorName c = boxColorSensor.getColor();         
         if (c >= COLOR_UNKNOWN && c <= COLOR_WHITE)
         counts[(int)c]++;
         
         delay(100);  // 100 ms between samples
-    }
-
+    } 
     // Find the enum value with the highest count
     int bestIndex = COLOR_UNKNOWN;
     for (int i = COLOR_UNKNOWN + 1; i <= COLOR_WHITE; i++)

@@ -162,7 +162,7 @@ namespace Task1
         // 2. Move Forward until close (target ~60mm for color sensor)
         unsigned long t0 = millis();
         while (robot.frontTof.readRange() > 60 && millis() - t0 < 2000) {
-            robot.moveStraight(15); // Slow approach
+            robot.moveStraightGyro(15); // Slow approach
             delay(10);
         }
         robot.stop();
@@ -183,7 +183,7 @@ namespace Task1
         // 6. Move Backward to original position
         // Use encoder-based movement or move back until at junction
         // Move back slowly while checking for the junction
-        robot.moveStraight(-15);
+        robot.moveStraightGyro(-15);
         unsigned long t1 = millis();
         while (!robot.junction.isAllWhite() && millis() - t1 < 3000) {
             robot.ir.updateSensors();

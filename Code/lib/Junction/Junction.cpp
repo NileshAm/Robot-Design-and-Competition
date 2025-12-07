@@ -18,7 +18,7 @@ bool Junction::isRightTurn(){
 bool Junction::isLeftTurn(){
     bool out[8];
     _ir.readDigital(out);
-    return pack8(out) == 0b11111000 || pack8(out) == 0b11110000;
+    return pack8(out) == 0b11111000 || pack8(out) == 0b11110000 || pack8(out) == 0b11111100;
 }
 
 bool Junction::isTJunction(){
@@ -47,4 +47,15 @@ bool Junction::isLine(){
     int c = 0;
     for (bool v : out) c += v;
     return c == 1 || c == 2 || c==3 || c==4;
+}
+
+bool Junction::isRightEdge(){
+    bool out[8];
+    _ir.readDigital(out);
+    return pack8(out) == 0b00000011 || pack8(out) == 0b00000001 ;
+}
+bool Junction::isLeftEdge(){
+bool out[8];
+    _ir.readDigital(out);
+    return pack8(out) == 0b11000000 || pack8(out) == 0b10000000 ;
 }

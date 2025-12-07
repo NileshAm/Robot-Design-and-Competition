@@ -165,7 +165,7 @@ namespace Task1Front
         unsigned long t0 = millis();
         // Move closer than before (e.g. < 50mm)
         while (robot.frontTof.readRange() > 50 && millis() - t0 < 2000) {
-            robot.moveStraight(15); // Slow approach
+            robot.moveStraightGyro(15); // Slow approach
             delay(10);
         }
         robot.stop();
@@ -176,7 +176,7 @@ namespace Task1Front
         
         // 3. Move Backward to original position
         // Move back until we hit the junction (all white line)
-        robot.moveStraight(-15);
+        robot.moveStraightGyro(-15);
         while (!robot.junction.isAllWhite()) {
             robot.ir.updateSensors();
             delay(1);

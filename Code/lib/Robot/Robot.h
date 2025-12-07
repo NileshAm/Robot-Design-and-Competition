@@ -9,12 +9,13 @@
 #include <OLED.h>
 #include <pushbutton.h>
 #include <Grabber.h>
+#include <MPU6050.h>
 
 class Robot {
     public:
         using TurnCallback = void (*)(Robot*);   // non-capturing lambda or plain function
 
-        Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof& leftTof, Tof& leftTof2, Tof& frontTopTof, Tof& rightTof, ColorSensor& grabberSensor, ColorSensor& boxColorSensor, Grabber& grabber, OLED& oled);
+        Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof& leftTof, Tof& leftTof2, Tof& frontTopTof, Tof& rightTof, ColorSensor& grabberSensor, ColorSensor& boxColorSensor, Grabber& grabber, OLED& oled, MPU6050 &imu);
 
         Motor& MotorR;        // dir1, dir2, pwm, encA, encB, ticks/rev
         Motor& MotorL;        // dir1, dir2, pwm, encA, encB, ticks/rev
@@ -29,9 +30,11 @@ class Robot {
         Grabber& grabber;
         Junction junction;
         OLED& oled;
+        MPU6050 &imu;
 
         void moveStraight();
         void moveStraight(float speed);
+        void moveStraightGyro(int initYaw, int speed = 30);
         void followRamp(float speed = -20);
         void followLine(int speed=40);
         void followSingleWall();
@@ -105,6 +108,7 @@ class Robot {
         PID _singleWallFollowerPID;
         PID _singleWallDistancePID;
         PID _doubleWallFollowerPID;
+        PID _straightLineGyroPID;
         PID _turnPID;
         uint16_t _ticksPer360 = 1150;
         double _ticksPerDegree;

@@ -129,7 +129,7 @@ namespace Traverse
 
         while (robot.junction.isAllBlack())
         {
-            robot.moveStraight(20);
+            robot.moveStraightGyro(20);
         }
         robot.turnRight();
         robot.goCell();

@@ -13,6 +13,7 @@
 #include <MenuSystem.h>
 #include <UpdatePID.h>
 #include <ServoMotor.h>
+#include <MPU6050.h>
 
 void setup()
 {
@@ -50,12 +51,11 @@ void setup()
     rightTof.disable();
     frontTopTof.disable();
 
-    frontTof.init(17);
-    leftTof.init(8);
-    leftTof2.init(-21);
-    rightTof.init(10);
-    frontTopTof.init(34);
-    oled.displayText("TOF init complete...", 0, 30, 1);
+    frontTof.init(25);
+    leftTof.init(20);
+    leftTof2.init(-8);
+    rightTof.init(17);
+    frontTopTof.init(48);
 
     ColorSensor boxColorSensor(A0, A1, A2, A3, A4, A5);
     ColorSensor grabberSensor(43, 45, 47, 49, 51, 53);
@@ -78,8 +78,12 @@ void setup()
     CurrentSensor currentSensor(A8, 0.001, 60); 
     Grabber grabber(grabServo, liftServo, currentSensor);
     grabber.init();
+    
+    MPU6050 imu = MPU6050();
+    imu.begin();
+    oled.displayText("IMU init complete...", 0, 10, 1);
 
-    Robot robot(rightMotor, leftMotor, ir, frontTof, leftTof, leftTof2, frontTopTof, rightTof, grabberSensor, boxColorSensor, grabber, oled);
+    Robot robot(rightMotor, leftMotor, ir, frontTof, leftTof, leftTof2, frontTopTof, rightTof, grabberSensor, boxColorSensor, grabber, oled, imu);
     oled.displayText("Robot init complete...", 0, 10, 1);
 
 

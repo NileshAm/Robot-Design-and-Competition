@@ -442,13 +442,14 @@ void MenuSystem::debugIR()
 
 void MenuSystem::straightLine()
 {
-
+    int initYaw = _robot.imu.getYaw();
     while (true)
     {
         // _oled.clear();
         // _oled.displayText((String)_robot.MotorR.getTicks(), 0, 0, 1);
         // _oled.displayText((String)_robot.MotorL.getTicks(), 10, 0, 1);
-        _robot.moveStraight(30);
+        // _robot.moveStraightGyro(30);
+        _robot.moveStraightGyro(initYaw, 30);
     }
 }
 
