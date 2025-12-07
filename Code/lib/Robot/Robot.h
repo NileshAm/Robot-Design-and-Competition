@@ -105,8 +105,9 @@ class Robot {
         PID _singleWallFollowerPID;
         PID _singleWallDistancePID;
         PID _doubleWallFollowerPID;
+        PID _turnPID;
         uint16_t _ticksPer360 = 1150;
         double _ticksPerDegree;
 
-        void _turnCore(int angle, bool useCb, uint16_t cbEveryMs, TurnCallback cb);
+        void _turnCore(int angle);
 };

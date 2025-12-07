@@ -24,7 +24,8 @@ _lineFollowerPID(0.02, -0.005, 0, 700),
 // _singleWallDistancePID(0.5,0,0.05,100),
 _singleWallFollowerPID(1, 0.1, 0, 0),
 _singleWallDistancePID(0.75, 0, 0, 120),
-_doubleWallFollowerPID(0.25, 0.1, 0, 90)
+_doubleWallFollowerPID(0.25, 0.1, 0, 90),
+_turnPID(1, 0, 0, 0)
 {
     _ticksPerDegree = (double)_ticksPer360 / 360;
 };
@@ -65,60 +66,124 @@ void Robot::turnRight()
 
 void Robot::turn(int angle)
 {
-    _turnCore(angle, /*useCb=*/false, 0, nullptr);
+    _turnCore(angle);
 }
 
-void Robot::turn(int angle, uint16_t cbEveryMs, TurnCallback cb)
-{
-    _turnCore(angle, /*useCb=*/true, cbEveryMs ? cbEveryMs : 1, cb);
-}
+// void Robot::turn(int angle, uint16_t cbEveryMs, TurnCallback cb)
+// {
+//     _turnCore(angle, /*useCb=*/true, cbEveryMs ? cbEveryMs : 1, cb);
+// }
 
-void Robot::_turnCore(int angle, bool useCb, uint16_t cbEveryMs, TurnCallback cb)
+// void Robot::_turnCore(int angle, bool useCb, uint16_t cbEveryMs, TurnCallback cb)
+// {
+//     PID turnPID(0.15, 0, 0, 0);
+//     if (angle == 0)
+//         return;
+
+//     MotorL.resetTicks();
+//     MotorR.resetTicks();
+
+//     const long target = lround(fabsf(_ticksPerDegree * (float)angle * 1));
+//     const int dir = (angle >= 0) ? 1 : -1;
+
+//     MotorL.setSpeed(30 * dir);
+//     MotorR.setSpeed(-30 * dir);
+
+//     unsigned long nextCb = millis() + cbEveryMs;
+//     const unsigned long TIMEOUT_MS = 8000;
+//     const unsigned long t0 = millis();
+
+//     while (labs(MotorL.getTicks()) < target || labs(MotorR.getTicks()) < target)
+//     {
+//         const unsigned long now = millis();
+
+//         if (useCb && (long)(now - nextCb) >= 0)
+//         {
+//                 if (cb)
+//                     cb(this); // e.g., [](Robot* r){ r->ir.updateSensors(); }
+//                 nextCb += cbEveryMs;
+//         }
+
+//         long L = labs(MotorL.getTicks());
+//         long R = labs(MotorR.getTicks());
+
+//         int error = L - R;
+//         int correction = (int)turnPID.compute((float)error);
+
+//         // if (L >= target)
+//         //     MotorL.setSpeed(0);
+//         // if (R >= target)
+//         //     MotorR.setSpeed(0);
+
+//         // if ((L >= target && R >= target) || (now - t0 > TIMEOUT_MS))
+//         //     break;
+//         float speedFactor = 1.1;
+//         MotorR.setSpeed((-30 * dir * speedFactor) - correction);
+//         MotorL.setSpeed((30 * dir * speedFactor) + correction);
+//     }
+            
+//     brake();
+// }
+            
+
+void Robot::_turnCore(int angle)
 {
-    PID turnPID(0.15, 0, 0, 0);
+    int initAngle = imu.getYaw();
     if (angle == 0)
         return;
 
+    // Reset encoders so we can measure progress & drift
     MotorL.resetTicks();
     MotorR.resetTicks();
 
-    const long target = lround(fabsf(_ticksPerDegree * (float)angle * 1));
+    // Positive angle => turn left (L forward, R backward)
     const int dir = (angle >= 0) ? 1 : -1;
 
-    MotorL.setSpeed(30 * dir);
-    MotorR.setSpeed(-30 * dir);
+    // How many encoder ticks we expect per degree
+    const long targetTicks = lroundf(fabsf(_ticksPerDegree * (float)angle));
 
-    unsigned long nextCb = millis() + cbEveryMs;
-    const unsigned long TIMEOUT_MS = 8000;
-    const unsigned long t0 = millis();
+    const int maxTurnSpeed      = 30;
+    const int minEffectiveSpeed = 20;
+    const float ticksTolFactor  = 1.1f;    // stop when we reach ~98% of target
+    const long  TIMEOUT_MS      = 5000;
+    const unsigned long t0      = millis();
 
-    while (labs(MotorL.getTicks()) < target || labs(MotorR.getTicks()) < target)
+    while (true)
     {
-        const unsigned long now = millis();
-
-        if (useCb && (long)(now - nextCb) >= 0)
-        {
-            if (cb)
-                cb(this); // e.g., [](Robot* r){ r->ir.updateSensors(); }
-            nextCb += cbEveryMs;
-        }
-
         long L = labs(MotorL.getTicks());
         long R = labs(MotorR.getTicks());
 
-        int error = L - R;
-        int correction = (int)turnPID.compute((float)error);
+        // Average ticks is a proxy for rotation progress
+        long avgTicks = (L + R) / 2;
 
-        // if (L >= target)
-        //     MotorL.setSpeed(0);
-        // if (R >= target)
-        //     MotorR.setSpeed(0);
+        // Error in "how much turn is left"
+        long remaining = targetTicks - avgTicks;
+        float error = (float)remaining;
 
-        // if ((L >= target && R >= target) || (now - t0 > TIMEOUT_MS))
-        //     break;
-        float speedFactor = 1.1;
-        MotorR.setSpeed((-30 * dir * speedFactor) - correction);
-        MotorL.setSpeed((30 * dir * speedFactor) + correction);
+        // PID outputs a scalar "spin speed"
+        float u = _turnPID.compute(error);
+
+        // Convert to signed speed (dir handles CW/CCW)
+        int mag = (int)fabsf(u);
+        if (mag > maxTurnSpeed) mag = maxTurnSpeed;
+
+        // Make sure it's strong enough to move
+        if (mag > 0 && mag < minEffectiveSpeed)
+            mag = minEffectiveSpeed;
+
+        // Enforce equal absolute speeds: |L| == |R|
+        int leftSpeed  =  dir * mag;
+        int rightSpeed = -dir * mag;
+
+        MotorL.setSpeed(leftSpeed);
+        MotorR.setSpeed(rightSpeed);
+
+        bool reached = (avgTicks >= (long)(ticksTolFactor * targetTicks));
+        bool timeout = (millis() - t0) > TIMEOUT_MS;
+
+        if (reached || timeout)
+
+            break;
     }
 
     brake();
