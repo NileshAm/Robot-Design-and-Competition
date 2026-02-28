@@ -21,7 +21,7 @@ namespace Task3
             robot.followLine();
         }
 
-        long ticksPer0 = 200; // TODO: tune this value
+        long ticksPer0 = 200; 
         while (!robot.junction.isLine())
         {
             robot.MotorL.resetTicks();
@@ -58,7 +58,7 @@ namespace Task3
             robot.followLine();
         }
         robot.turn90();
-        while (robot.frontTof.readRange() > 5) // TODO: tune this value to change the wall gap
+        while (robot.frontTof.readRange() > 5)  to change the wall gap
         {
             robot.followLine();
         }
