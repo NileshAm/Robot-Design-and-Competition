@@ -179,24 +179,6 @@ void MenuSystem::test()
     {
         delay(200);
     }
-    
-    // int init = _robot.imu.getYaw();
-    // while (true)
-    // {
-    //     _robot.moveStraightGyro(init, 30);
-    // }
-    
-    // Traverse::run(_robot);
-    // _robot.goCell();
-    // _robot.turnRight();
-    // _robot.goCell();
-    // _robot.goTillCM(8);
-    // while (true)
-    // {
-    // _robot.goCell();
-    // _robot.turnLeft();
-    // _robot.goCell();
-    // _robot.IRDebug();
     int initAngle = _robot.imu.getYaw();
     bool rightcheck = true;
     while (true)
@@ -235,163 +217,8 @@ void MenuSystem::test()
                 }
             }
         }
-        
-        //####################################################################################################
-        
-        // if(_robot.junction.isLine() && !(_robot.junction.isRightTurn()) && !(_robot.junction.isLeftTurn())){
-        //     _robot.followLine(30);
-        // }
-        // else if(_robot.junction.isRightTurn()){
-        //     _robot.turnRight();
-        // }
-        // else if(_robot.junction.isLeftTurn()){
-        //     _robot.turnLeft();
-        // }
-        // else
-        // {
-        //     if (init)
-        //     {
-        //         _robot.MotorL.resetTicks();
-        //         _robot.MotorR.resetTicks();
-        //         init = false;
-        //         _robot.turn(20);
-        //     }
-        //     if ((_robot.MotorL.getTicks() + _robot.MotorR.getTicks())/2>50)
-        //     {
-        //         if(dir && !init){
-        //             _robot.turn(-40);
-        //         }
-        //         else{
-        //             _robot.turn(40);
-        //         }
-        //         _robot.MotorL.resetTicks();
-        //         _robot.MotorR.resetTicks();
-
-        //     }
-        //     _robot.moveStraightGyro(20);
-            
-        // }
-
-
     }
     _robot.brake();
-    
-    // while (true)
-    // {
-    //     Serial.print(_robot.frontTof.readRange());
-    //     Serial.print(",");
-    //     Serial.print(_robot.frontTopTof.readRange());
-    //     Serial.print(",");
-    //     Serial.print(_robot.leftTof.readRange());
-    //     Serial.print(",");
-    //     Serial.print(_robot.leftTof2.readRange());
-    //     Serial.print(",");
-    //     Serial.println(_robot.rightTof.readRange());
-    //     Serial.println(",");
-    //     delay(100);
-    // }
-    
-
-    // Serial.print(_robot.junction.isLine());
-    // Serial.print(",");
-    // Serial.print(_robot.junction.isAllWhite());
-    // Serial.print(",");
-    // Serial.print(_robot.junction.isAllBlack());
-    // Serial.print(",");
-    // Serial.print(_robot.junction.isRightTurn());
-    // Serial.print(",");
-    // Serial.print(_robot.junction.isLeftTurn());
-    // Serial.println(",");
-
-    // Serial.print(_robot.MotorL.getTicks());
-    // Serial.print(",");
-    // Serial.print(_robot.MotorR.getTicks());
-    // Serial.println(",");
-
-    // _robot.MotorL.setSpeed(30);
-    // _robot.MotorR.setSpeed(30);
-
-    // double dig[8];
-    // _robot.ir.readNormalized(dig);
-    // for (int i = 0; i < 8; i++){
-    //     Serial.print(dig[i]);
-    //     Serial.print(",");
-    // }
-    // Serial.println();
-    // delay(100);
-
-    // while (true)
-    // {
-    //     if(_robot.grabber.grab()){
-    //         Serial.println("grab");
-    //         delay(2000);
-    //         _robot.grabber.liftBox();
-    //         delay(2000);
-    //         _robot.grabber.reset();
-    //         delay(2000);
-    //         // _robot.grabber.release();
-    //         // delay(2000);
-    //     }
-    //     _robot.grabber.release();
-    // }
-    // delay(3000);
-    // //calibrateColor();
-    // _oled.clear();
-
-    // while (true)
-    // {
-    //     delay(500);
-    //     switch (_robot.grabberSensor.getColor())
-    //     {
-    //     case COLOR_RED:
-    //         _oled.clear();
-    //         Serial.println("RED");
-    //         _oled.displayText("RED");
-    //         _oled.display();
-    //         break;
-    //     case COLOR_GREEN:
-    //         _oled.clear();
-    //         Serial.println("GREEN");
-    //         _oled.displayText("GREEN");
-    //         _oled.display();
-    //         break;
-    //     case COLOR_BLUE:
-    //         _oled.clear();
-    //         Serial.println("BLUE");
-    //         _oled.displayText("BLUE");
-    //         _oled.display();
-    //         break;
-    //     case COLOR_BLACK:
-    //         _oled.clear();
-    //         Serial.println("BLACK");
-    //         _oled.displayText("BLACK");
-    //         _oled.display();
-    //         break;
-    //     case COLOR_WHITE:
-    //         _oled.clear();
-    //         Serial.println("WHITE");
-    //         _oled.displayText("WHITE");
-    //         _oled.display();
-    //         break;
-    //     default:
-    //         _oled.clear();
-    //         Serial.println("UNKNOWN");
-    //         _oled.displayText("UNKOWN");
-    //         _oled.display();
-    //         break;
-    //     }
-    // }
-    // bool val[8];
-    // _robot.ir.readDigital(val);
-    
-    // printArray(val, 8);
-        // delay(100);
-        // _robot.MotorL.setSpeed(30);
-        // Serial.println(_robot.MotorL.getTicks());
-        // delay(100);
-    // }
-    // _robot.brake();
-
     
 }
 void MenuSystem::ramp()
@@ -425,18 +252,6 @@ void MenuSystem::objectDetect()
 
 void MenuSystem::detectColor()
 {
-    // _oled.clear();
-    // _oled.displayText("White", 0, 0, 1);
-    // delay(2000);
-    // _robot.boxColorSensor.scanSamples(100);
-    // _oled.clear();
-    // _oled.displayText("Black", 0, 0, 1);
-    // delay(2000);
-    // _robot.boxColorSensor.scanSamples(100, false);
-    // _oled.clear();
-    // _oled.displayCenteredText("Color detection running", 1);
-    // _oled.display();
-
     while (true)
         {
             delay(500);
@@ -579,17 +394,6 @@ void MenuSystem::gridRun()
 
     }
     _robot.brake();
-
-    // _robot.goCell(2);
-    // _robot.goTillCM(5);
-    // _robot.turn(90);
-    // _robot.goCell(2);
-
-    // _robot.brake();
-
-    // _oled.clear();
-    // _oled.displayCenteredText("Task Done", 1);
-    // _oled.display();
     delay(1500);
 }
 
@@ -642,6 +446,22 @@ void MenuSystem::GrabBox()
 void MenuSystem::runTask1()
 {
     runTask("Task 1", Task1::run);
+}
+void MenuSystem::runTask2()
+{
+    runTask("Task 2", Task2::run);
+}
+void MenuSystem::runTask3()
+{
+    runTask("Task 3", Task3::run);
+}
+void MenuSystem::runTask4()
+{
+    runTask("Task 4", Task4::run);
+}   
+void MenuSystem::runTask5()
+{
+    runTask("Task 5", Task5::run);
 }
 
 // -------------------------------

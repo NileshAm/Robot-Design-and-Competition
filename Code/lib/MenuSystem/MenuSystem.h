@@ -7,9 +7,9 @@
 
 #include "../../src/Tasks/Task1/Task1.h"
 #include "../../src/Tasks/Traverse/Traverse.h" // added
-// #include "../src/Tasks/Task2/Task2.h"
-// #include "../src/Tasks/Task3/Task3.h"
-// #include "../src/Tasks/Task4/Task4.h"
+#include "../src/Tasks/Task2/Task2.h"
+#include "../src/Tasks/Task3/Task3.h"
+#include "../src/Tasks/Task4/Task4.h"
 // #include "../src/Tasks/Task5/Task5.h"
 // #include "../src/Tasks/Task6/Task6.h"
 
