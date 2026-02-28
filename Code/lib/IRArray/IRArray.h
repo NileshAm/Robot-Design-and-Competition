@@ -14,7 +14,7 @@ public:
   // ---- reads (caller provides arrays of size _n) ----
   void readRaw(int* out);
   void readNormalized(double* out);      // uses readRaw()
-  void digitalRead(bool* out);          // uses readNormalized()
+  void readDigital(bool* out);          // uses readNormalized()
 
   
   void setScalingFactor(const double* in);
