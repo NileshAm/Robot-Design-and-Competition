@@ -8,7 +8,7 @@ namespace Task4
         robot.turn90();
         while (robot.leftTof.readRange() > 5) // TODO: tune this value to change the wall gap
         {
-            robot.followWall(); // FIX: change to followWall to single wall follow and implement single wall follow with 2 TOFs
+            robot.followSingleWall(); // FIX: change to followWall to single wall follow and implement single wall follow with 2 TOFs
         }
         robot.stop();
         robot.goTillCM(20); // TODO: tune this value to change the distance from wall to junction
@@ -36,7 +36,7 @@ namespace Task4
 
             while (robot.MotorR.getTicks() < 50) // TODO: tune this value to change the forward movement step
             {
-                robot.followWall(); // FIX: change to followWall to single wall follow and implement single wall follow with 2 TOFs
+                robot.followSingleWall(); // FIX: change to followWall to single wall follow and implement single wall follow with 2 TOFs
             }
         }
         robot.goTillCM(2); // TODO: tune this value to change the forward movement step
@@ -46,7 +46,7 @@ namespace Task4
 
         while (!robot.junction.isAllWhite())
         {
-            robot.followWall(); // FIX: change to followWall to single wall follow and implement single wall follow with 2 TOFs
+            robot.followSingleWall(); // FIX: change to followWall to single wall follow and implement single wall follow with 2 TOFs
         }
         robot.turn90();
 

@@ -26,8 +26,8 @@ void setup()
     oled.displayText("Initializing...", 0, 0, 1);
     Serial.println("Initializing...");
 
-    Motor rightMotor(28, 30, 5, 4, 2, 22, 450); // dir1, dir2, pwmF, pwmB, encA, encB, ticks/rev     motor controller 1
-    Motor leftMotor(32, 34, 6, 7, 3, 24, 450);  // dir1, dir2, pwmF, pwmB, encA, encB, ticks/rev   motor controller 2
+    Motor leftMotor(28, 30, 4, 5, 2, 22, 450); // dir1, dir2, pwmF, pwmB, encA, encB, ticks/rev     motor controller 1
+    Motor rightMotor(32, 34, 7, 6, 3, 24, 450);  // dir1, dir2, pwmF, pwmB, encA, encB, ticks/rev   motor controller 2
     leftMotor.init();
     rightMotor.init();
     oled.displayText("Motor init complete...", 0, 10, 1);

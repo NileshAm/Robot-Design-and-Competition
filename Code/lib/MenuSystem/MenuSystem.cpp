@@ -1,6 +1,7 @@
 #include "MenuSystem.h"
 #include <Arduino.h>
 #include <Utils.h>
+#include "../../src/Tasks/Task2/Task2.h"
 
 MenuSystem::MenuSystem(OLED &oled,
                        pushbutton &btnUp,
@@ -172,7 +173,20 @@ void MenuSystem::test()
 {
     _oled.clear();
     _oled.displayCenteredText("Testing...", 1);
-    Traverse::run(_robot);
+
+    Task2::run(_robot);
+    while (true)
+    {
+        delay(200);
+    }
+    
+    // int init = _robot.imu.getYaw();
+    // while (true)
+    // {
+    //     _robot.moveStraightGyro(init, 30);
+    // }
+    
+    // Traverse::run(_robot);
     // _robot.goCell();
     // _robot.turnRight();
     // _robot.goCell();
@@ -183,35 +197,100 @@ void MenuSystem::test()
     // _robot.turnLeft();
     // _robot.goCell();
     // _robot.IRDebug();
+    int initAngle = _robot.imu.getYaw();
+    bool rightcheck = true;
+    while (true)
+    {
+        if(_robot.junction.isLine()){
+            _robot.followLine(25);
+            initAngle = _robot.imu.getYaw();
+            _robot.MotorL.resetTicks();
+            _robot.MotorR.resetTicks();
+        }
+        else{
+            if (_robot.junction.isRightTurn())
+            {
+                _robot.turnRight();
+            }
+            else if (_robot.junction.isLeftTurn())
+            {
+                _robot.turnLeft();
+            }
+            else{
+                if((_robot.MotorL.getTicks()+_robot.MotorR.getTicks())/2 < 350)
+                {
+                    _robot.moveStraightGyro(initAngle, 25);
+                }
+                else{
+                    while ((_robot.MotorL.getTicks()+_robot.MotorR.getTicks())/2 > 100)
+                    {
+                        _robot.moveStraightGyro(initAngle, -25);
+                    }
+                    if(rightcheck){
+                        _robot.turn(15);
+                    }else{
+                        _robot.turn(-30);
+                    }
+                    initAngle = _robot.imu.getYaw();
+                }
+            }
+        }
+        
+        //####################################################################################################
+        
+        // if(_robot.junction.isLine() && !(_robot.junction.isRightTurn()) && !(_robot.junction.isLeftTurn())){
+        //     _robot.followLine(30);
+        // }
+        // else if(_robot.junction.isRightTurn()){
+        //     _robot.turnRight();
+        // }
+        // else if(_robot.junction.isLeftTurn()){
+        //     _robot.turnLeft();
+        // }
+        // else
+        // {
+        //     if (init)
+        //     {
+        //         _robot.MotorL.resetTicks();
+        //         _robot.MotorR.resetTicks();
+        //         init = false;
+        //         _robot.turn(20);
+        //     }
+        //     if ((_robot.MotorL.getTicks() + _robot.MotorR.getTicks())/2>50)
+        //     {
+        //         if(dir && !init){
+        //             _robot.turn(-40);
+        //         }
+        //         else{
+        //             _robot.turn(40);
+        //         }
+        //         _robot.MotorL.resetTicks();
+        //         _robot.MotorR.resetTicks();
+
+        //     }
+        //     _robot.moveStraightGyro(20);
+            
+        // }
+
+
+    }
+    _robot.brake();
+    
     // while (true)
     // {
-    //     if (_robot.junction.isLeftTurn()){
-    //         _robot.turnLeft();
-    //     }
-    //     if (_robot.junction.isRightTurn()){
-    //         _robot.turnRight();
-    //     }
-    //     if (_robot.junction.isLine()){
-    //         _robot.followLine(20);
-    //     }
-    //     if (_robot.junction.isAllBlack()){
-    //         _robot.moveStraight(20);
-    //     }
-
+    //     Serial.print(_robot.frontTof.readRange());
+    //     Serial.print(",");
+    //     Serial.print(_robot.frontTopTof.readRange());
+    //     Serial.print(",");
+    //     Serial.print(_robot.leftTof.readRange());
+    //     Serial.print(",");
+    //     Serial.print(_robot.leftTof2.readRange());
+    //     Serial.print(",");
+    //     Serial.println(_robot.rightTof.readRange());
+    //     Serial.println(",");
+    //     delay(100);
     // }
-    // _robot.brake();
     
-
-    // Serial.print(_robot.frontTof.readRange());
-    // Serial.print(",");
-    // Serial.print(_robot.frontTopTof.readRange());
-    // Serial.print(",");
-    // Serial.print(_robot.leftTof.readRange());
-    // Serial.print(",");
-    // Serial.print(_robot.leftTof2.readRange());
-    // Serial.print(",");
-    // Serial.println(_robot.rightTof.readRange());
-    // Serial.println(",");
 
     // Serial.print(_robot.junction.isLine());
     // Serial.print(",");
@@ -458,16 +537,59 @@ void MenuSystem::gridRun()
     _oled.clear();
     _oled.displayText("Grid run...", 0, 0, 1);
     delay(1000);
-    _robot.goCell(2);
-    _robot.goTillCM(5);
-    _robot.turn(90);
-    _robot.goCell(2);
 
+    int initAngle = _robot.imu.getYaw();
+    bool rightcheck = true;
+    while (true)
+    {
+        if(_robot.junction.isLine()){
+            _robot.followLine(25);
+            initAngle = _robot.imu.getYaw();
+            _robot.MotorL.resetTicks();
+            _robot.MotorR.resetTicks();
+        }
+        else{
+            if (_robot.junction.isRightTurn())
+            {
+                _robot.turnRight();
+            }
+            else if (_robot.junction.isLeftTurn())
+            {
+                _robot.turnLeft();
+            }
+            else{
+                if((_robot.MotorL.getTicks()+_robot.MotorR.getTicks())/2 < 800)
+                {
+                    _robot.moveStraightGyro(initAngle, 25);
+                }
+                else{
+                    while ((_robot.MotorL.getTicks()+_robot.MotorR.getTicks())/2 > 100)
+                    {
+                        _robot.moveStraightGyro(initAngle, -25);
+                    }
+                    if(rightcheck){
+                        _robot.turn(15);
+                    }else{
+                        _robot.turn(-30);
+                    }
+                    initAngle = _robot.imu.getYaw();
+                }
+            }
+        }
+
+    }
     _robot.brake();
 
-    _oled.clear();
-    _oled.displayCenteredText("Task Done", 1);
-    _oled.display();
+    // _robot.goCell(2);
+    // _robot.goTillCM(5);
+    // _robot.turn(90);
+    // _robot.goCell(2);
+
+    // _robot.brake();
+
+    // _oled.clear();
+    // _oled.displayCenteredText("Task Done", 1);
+    // _oled.display();
     delay(1500);
 }
 

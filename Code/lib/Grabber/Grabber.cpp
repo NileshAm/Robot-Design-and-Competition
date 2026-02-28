@@ -42,6 +42,7 @@ bool Grabber::grab() {
     for (float angle = _grabServo.getAngle(); angle <= _closeAngle; angle += 5) {
         _grabServo.writeAngle(angle);
         delay(_grabSpeed);
+        Serial.println(_currentSensor.read());
         if (_currentSensor.isSpike()) {
             digitalWrite(LED_BUILTIN, HIGH);
             int holdPos = angle + 5;

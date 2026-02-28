@@ -29,7 +29,7 @@ void Tof::init(int offset)
     delay(10);
     if(!_sensor.begin()){
         Serial.println("Tof failed to initialize");
-        while (1);
+        // while (1);
     }else{
         Serial.println("Tof initialization complete");
     }

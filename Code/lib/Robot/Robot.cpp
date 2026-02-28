@@ -144,8 +144,8 @@ void Robot::_turnCore(int angle)
     // How many encoder ticks we expect per degree
     const long targetTicks = lroundf(fabsf(_ticksPerDegree * (float)angle));
 
-    const int maxTurnSpeed      = 30;
-    const int minEffectiveSpeed = 20;
+    const int maxTurnSpeed      = 40;
+    const int minEffectiveSpeed = 30;
     const float ticksTolFactor  = 1.1f;    // stop when we reach ~98% of target
     const long  TIMEOUT_MS      = 5000;
     const unsigned long t0      = millis();
