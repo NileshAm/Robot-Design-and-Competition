@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include <ServoMotor.h>
 
-ServoMotor wheel(6 /*pin*/, 1000, 2000, true);  // continuous
+ServoMotor wheel(A1 /*pin*/, 1000, 2000, true);  // continuous
 
 void setup() {
   Serial.begin(115200);

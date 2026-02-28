@@ -4,19 +4,21 @@
 // static registry definition
 Motor *Motor::_reg[Motor::kMaxInts] = {nullptr, nullptr, nullptr, nullptr, nullptr, nullptr};
 
-Motor::Motor(uint8_t dir1, uint8_t dir2, uint8_t pwm,
+Motor::Motor(uint8_t dir1, uint8_t dir2, uint8_t pwmF, uint8_t pwmB,
              uint8_t encA, uint8_t encB, uint16_t tpr, float wheelDiameter)
-    : _dir1(dir1), _dir2(dir2), _pwm(pwm), _encA(encA), _encB(encB),
+    : _dir1(dir1), _dir2(dir2), _pwmF(pwmF), _pwmB(pwmB), _encA(encA), _encB(encB),
       _ticks(0), _ticksPerRev(tpr), _lastMs(0), _lastTicks(0), _intNum(-1), _wheelDiameter(wheelDiameter){}
 
 void Motor::init()
 {
     pinMode(_dir1, OUTPUT);
     pinMode(_dir2, OUTPUT);
-    pinMode(_pwm, OUTPUT);
+    pinMode(_pwmF, OUTPUT);
+    pinMode(_pwmB, OUTPUT);
     digitalWrite(_dir1, LOW);
     digitalWrite(_dir2, LOW);
-    analogWrite(_pwm, 0);
+    analogWrite(_pwmF, 0);
+    analogWrite(_pwmB, 0);
 
     pinMode(_encA, INPUT_PULLUP);
     pinMode(_encB, INPUT_PULLUP);
@@ -63,29 +65,37 @@ void Motor::init()
     _lastMs = millis();
     _lastTicks = 0;
 }
-
+void Motor::brake()
+{
+    analogWrite(_pwmF, 0);
+    analogWrite(_pwmB, 0);
+    digitalWrite(_dir1, HIGH);
+    digitalWrite(_dir2, HIGH);
+}
 void Motor::setSpeed(float pct)
 {
     pct = constrain(pct, -100, 100);
     uint8_t duty = map(abs(pct), 0, 100, 0, 255);
 
+    digitalWrite(_dir1, HIGH);
+    digitalWrite(_dir2, HIGH);
     if (pct > 0)
     {
-        digitalWrite(_dir1, HIGH);
-        digitalWrite(_dir2, LOW);
+        analogWrite(_pwmB, 0);
+        analogWrite(_pwmF, duty);
     }
     else if (pct < 0)
     {
-        digitalWrite(_dir1, LOW);
-        digitalWrite(_dir2, HIGH);
+        analogWrite(_pwmF, 0);
+        analogWrite(_pwmB, duty);
     }
     else
     {
         digitalWrite(_dir1, LOW);
         digitalWrite(_dir2, LOW);
-        duty = 0;
+        analogWrite(_pwmF, 0);
+        analogWrite(_pwmB, 0);
     }
-    analogWrite(_pwm, duty);
 }
 
 long Motor::getTicks()
@@ -163,12 +173,18 @@ void Motor::goTillTicks(long targetTicks, float speed)
 
 void Motor::goTillCM(float cm, float speed)
 {
+    long targetTicks = getTicksPerDistance(cm);
+    goTillTicks(targetTicks, speed);
+}
+
+long Motor::getTicksPerDistance(float cm)
+{
     if (_ticksPerRev == 0 || _wheelDiameter <= 0.0f)
-        return;
+        return 0;
 
     float revs = cm / (3.14159f * _wheelDiameter);
     long targetTicks = (long)(revs * (float)_ticksPerRev);
-    goTillTicks(targetTicks, speed);
+    return targetTicks;
 }
 
 inline void Motor::handleEncoder()

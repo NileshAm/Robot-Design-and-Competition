@@ -5,23 +5,40 @@
 #include <Tof.h>
 #include <PID.h>
 #include <Junction.h>
+#include <ColorSensor.h>
+#include <OLED.h>
+#include <pushbutton.h>
+#include <Grabber.h>
+#include <MPU6050.h>
 
 class Robot {
     public:
         using TurnCallback = void (*)(Robot*);   // non-capturing lambda or plain function
 
-        Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& Tof);
+        Robot(Motor& Motor_R, Motor& Motor_L, IRArray& IR_Arr, Tof& frontTof, Tof& leftTof, Tof& leftTof2, Tof& frontTopTof, Tof& rightTof, ColorSensor& grabberSensor, ColorSensor& boxColorSensor, Grabber& grabber, OLED& oled, MPU6050 &imu);
 
         Motor& MotorR;        // dir1, dir2, pwm, encA, encB, ticks/rev
         Motor& MotorL;        // dir1, dir2, pwm, encA, encB, ticks/rev
         IRArray& ir;    // number of sensors, pins array
-        Tof& tof1;      // xshut, address, sda, scl
+        Tof& frontTof;      // xshut, address, sda, scl
+        Tof& leftTof;      // xshut, address, sda, scl
+        Tof& leftTof2;      // xshut, address, sda, scl
+        Tof& frontTopTof;      // xshut, address, sda, scl
+        Tof& rightTof;      // xshut, address, sda, scl //act as the right tof also
+        ColorSensor& grabberSensor;
+        ColorSensor& boxColorSensor;
+        Grabber& grabber;
         Junction junction;
+        OLED& oled;
+        MPU6050 &imu;
 
         void moveStraight();
         void moveStraight(float speed);
-        void followLine();
-        void followWall();
+        void moveStraightGyro(int initYaw, int speed = 30);
+        void followRamp(float speed = -20);
+        void followLine(int speed=40);
+        void followSingleWall();
+        void followDoubleWall();
 
         
         /**
@@ -39,24 +56,62 @@ class Robot {
          *       or implementation. Exact rotation angle, timing, and behavior under
          *       load or obstruction are implementation-dependent.
          */
-        void turn90(); // speed -100 to 100
+        void turn90(bool clockwise=true); // speed -100 to 100
+        void turnLeft(); // speed -100 to 100
+        void turnRight(); // speed -100 to 100
 
         void turn(int angle);                                              // normal
         void turn(int angle, uint16_t cbEveryMs, TurnCallback cb);         // with callback
+        void centerOnLine();
         void stop();
+        void brake();
 
         void goTillTicks(long targetTicks);
         void goTillCM(float cm);
+        enum DetectionFlags {
+            DETECT_NONE = 0,
+            DETECT_LEFT = 1,
+            DETECT_RIGHT = 2,
+            DETECT_FRONT = 4
+        };
+
+        void goCell(int8_t cells=1);
+        uint8_t goCellWithDetect(int8_t cells=1);
 
         void calibrateIR();
 
-    private:
-        float _speed = 40;
-        PID _straightLinePID;
+        bool detectLeftBox();
+        bool detectRightBox();
+        bool detectFrontBox();
+
+        bool detectObstacle();
+
+        ColorName detectColor();
+
+        void setInterruptButton(pushbutton& btn);
+        bool isInterrupted();
+        void setLineFollowerPID(float kp, float ki, float kd);
+        void setSingleWallFollowerPID(float kp, float ki, float kd);
+        void setSingleWallDistancePID(float kp, float ki, float kd);
+        void setDoubleWallFollowerPID(float kp, float ki, float kd);
+        void setStraightLinePID(float kp, float ki, float kd);
+
         PID _lineFollowerPID;
-        PID _wallFollowerPID;
+
+        void IRDebug();
+
+    private:
+        pushbutton* _interruptButton = nullptr;
+        float _speed = 30;
+        PID _straightLinePID;
+        PID _rampPID;
+        PID _singleWallFollowerPID;
+        PID _singleWallDistancePID;
+        PID _doubleWallFollowerPID;
+        PID _straightLineGyroPID;
+        PID _turnPID;
         uint16_t _ticksPer360 = 1150;
         double _ticksPerDegree;
 
-        void _turnCore(int angle, bool useCb, uint16_t cbEveryMs, TurnCallback cb);
+        void _turnCore(int angle);
 };
